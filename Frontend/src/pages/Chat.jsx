@@ -187,6 +187,7 @@ function Sidebar({
   navigate
 }) {
   const isRail = collapsed;
+  const [accountMenu, setAccountMenu] = useState(false);
 
   return (
     <aside
@@ -213,7 +214,9 @@ function Sidebar({
         >
           <div className="flex items-center gap-3 min-w-0">
             <div
+            onClick={()=>navigate("/")}
               className="
+                hover:cursor-pointer
                 shrink-0
                 w-9 h-9 rounded-xl
                 bg-gradient-to-br from-zinc-950 via-black to-red-950/50
@@ -365,29 +368,108 @@ function Sidebar({
           </IconButton>
         </div>
 
-        {/* User */}
-        <div className={`p-3 border-t border-white/[0.05] ${isRail ? 'lg:border-t-0' : ''}`}>
+        {/* User / Account */}
+        <div className={`relative p-3 border-t border-white/[0.05] ${isRail ? 'lg:border-t-0' : ''}`}>
           <div
-            className={`flex items-center gap-3 p-2 md:p-3 rounded-xl hover:bg-white/[0.04] cursor-pointer ${
+            className={`flex items-center gap-3 p-2 md:p-3 rounded-xl hover:bg-white/[0.04] ${
               isRail ? 'justify-center' : ''
             }`}
             title="Varun"
           >
-            <div className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center">
+            <button
+              onClick={() => navigate('/profile')}
+              className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center hover:scale-105 transition"
+              title="Profile"
+            >
               <User size={17} className="text-white" />
-            </div>
+            </button>
 
             {!isRail && (
               <>
-                <div className="min-w-0 flex-1">
+                <button
+                  onClick={() => navigate('/profile')}
+                  className="min-w-0 flex-1 text-left"
+                  title="Profile"
+                >
                   <p className="text-sm text-white truncate">Varun</p>
                   <p className="text-[11px] text-zinc-600">Free plan</p>
-                </div>
+                </button>
 
-                <Settings2 size={17} className="text-zinc-600 shrink-0" />
+                <button
+                  onClick={() => setAccountMenu(!accountMenu)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-white hover:bg-white/[0.06] transition"
+                  title="Account settings"
+                >
+                  <Settings2 size={17} />
+                </button>
               </>
             )}
           </div>
+
+          {accountMenu && !isRail && (
+            <>
+              <div
+                onClick={() => setAccountMenu(false)}
+                className="fixed inset-0 z-40"
+              />
+              <div className="absolute bottom-[72px] right-3 left-3 z-50 rounded-2xl border border-white/[0.08] bg-[#0b0b0b]/95 backdrop-blur-2xl shadow-2xl p-2">
+                <button
+                  onClick={() => {
+                    setAccountMenu(false);
+                    navigate('/profile');
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-white/[0.05] transition"
+                >
+                  <User size={16} className="text-zinc-400" />
+                  <div>
+                    <p className="text-xs text-zinc-200">Profile</p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">Manage your account</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAccountMenu(false);
+                    navigate('/settings');
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-white/[0.05] transition"
+                >
+                  <Settings2 size={16} className="text-zinc-400" />
+                  <div>
+                    <p className="text-xs text-zinc-200">Settings</p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">Workspace preferences</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setAccountMenu(false);
+                    navigate('/pricing');
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-white/[0.05] transition"
+                >
+                  <Zap size={16} className="text-red-400" />
+                  <div>
+                    <p className="text-xs text-zinc-200">Billing & plan</p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">Manage your subscription</p>
+                  </div>
+                </button>
+
+                <div className="my-1 border-t border-white/[0.05]" />
+
+                <button
+                  onClick={() => setAccountMenu(false)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-red-500/[0.05] transition"
+                >
+                  <X size={16} className="text-red-400" />
+                  <div>
+                    <p className="text-xs text-red-300">Sign out</p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">End this session</p>
+                  </div>
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </aside>
@@ -403,6 +485,7 @@ function TopBar({
   setActiveAgent,
   setSidebarOpen,
   setRightPanel,
+  setAiControls,
 }) {
   const [agentMenu, setAgentMenu] = useState(false);
 
@@ -548,8 +631,12 @@ function TopBar({
           <PanelRight size={17} />
         </IconButton>
 
-        <IconButton title="Settings" className="hidden sm:flex">
-          <Settings2 size={17} />
+        <IconButton
+          title="AI Controls"
+          onClick={() => setAiControls(true)}
+          className="hidden sm:flex"
+        >
+          <SlidersHorizontal size={17} />
         </IconButton>
       </div>
     </header>
@@ -559,6 +646,139 @@ function TopBar({
 /* ─────────────────────────────────────────────────────────────
    AGENT ACTIVITY PANEL
 ───────────────────────────────────────────────────────────── */
+
+function AIControlsPanel({ open, setOpen }) {
+  const [webEnabled, setWebEnabled] = useState(true);
+  const [reasoningEnabled, setReasoningEnabled] = useState(false);
+  const [autoAgents, setAutoAgents] = useState(true);
+
+  if (!open) return null;
+
+  const Toggle = ({ enabled, onClick }) => (
+    <button
+      onClick={onClick}
+      className={`w-10 h-6 rounded-full p-1 transition ${
+        enabled ? 'bg-red-500' : 'bg-white/[0.12]'
+      }`}
+    >
+      <span
+        className={`block w-4 h-4 rounded-full bg-white transition-transform ${
+          enabled ? 'translate-x-4' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+
+  return (
+    <>
+      <div
+        onClick={() => setOpen(false)}
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+      />
+
+      <aside className="fixed right-0 top-0 bottom-0 z-50 w-[88vw] max-w-[360px] bg-[#070707]/95 backdrop-blur-2xl border-l border-white/[0.06] shadow-[-20px_0_60px_-30px_rgba(244,63,94,0.45)]">
+        <div className="h-full flex flex-col">
+          <div className="h-16 px-4 sm:px-5 flex items-center justify-between border-b border-white/[0.05]">
+            <div>
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal size={15} className="text-red-400" />
+                <h3 className="text-sm font-semibold text-white">AI Controls</h3>
+              </div>
+              <p className="text-[11px] text-zinc-600 mt-1">Customize how Nexus works</p>
+            </div>
+            <IconButton onClick={() => setOpen(false)}>
+              <X size={16} />
+            </IconButton>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600 font-semibold mb-2">
+              Response mode
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              <button className="p-3 rounded-xl border border-red-500/25 bg-red-500/10 text-left">
+                <div className="flex items-center gap-2">
+                  <Zap size={14} className="text-red-400" />
+                  <span className="text-xs font-medium text-red-300">Fast</span>
+                </div>
+                <p className="text-[10px] text-zinc-600 mt-1">Quick responses</p>
+              </button>
+
+              <button
+                onClick={() => setReasoningEnabled(!reasoningEnabled)}
+                className={`p-3 rounded-xl border text-left transition ${
+                  reasoningEnabled
+                    ? 'border-pink-500/25 bg-pink-500/10'
+                    : 'border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.05]'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Brain size={14} className={reasoningEnabled ? 'text-pink-400' : 'text-zinc-500'} />
+                  <span className={`text-xs font-medium ${reasoningEnabled ? 'text-pink-300' : 'text-zinc-300'}`}>
+                    Reason
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-600 mt-1">Deeper analysis</p>
+              </button>
+            </div>
+
+            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600 font-semibold mb-2">
+              Capabilities
+            </p>
+
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/10 flex items-center justify-center">
+                  <Globe size={15} className="text-red-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-zinc-200">Web search</p>
+                  <p className="text-[11px] text-zinc-600 mt-1">Use live web information</p>
+                </div>
+                <Toggle enabled={webEnabled} onClick={() => setWebEnabled(!webEnabled)} />
+              </div>
+
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                <div className="w-9 h-9 rounded-xl bg-pink-500/10 border border-pink-500/10 flex items-center justify-center">
+                  <Brain size={15} className="text-pink-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-zinc-200">Deep reasoning</p>
+                  <p className="text-[11px] text-zinc-600 mt-1">Spend more time solving complex tasks</p>
+                </div>
+                <Toggle enabled={reasoningEnabled} onClick={() => setReasoningEnabled(!reasoningEnabled)} />
+              </div>
+
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/10 flex items-center justify-center">
+                  <Sparkles size={15} className="text-rose-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-zinc-200">Auto-select agents</p>
+                  <p className="text-[11px] text-zinc-600 mt-1">Let Nexus choose the right specialists</p>
+                </div>
+                <Toggle enabled={autoAgents} onClick={() => setAutoAgents(!autoAgents)} />
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-red-500/10 bg-red-500/[0.035] p-4">
+              <div className="flex gap-3">
+                <Sparkles size={15} className="text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-medium text-zinc-300">Nexus orchestration</p>
+                  <p className="text-[11px] leading-5 text-zinc-600 mt-1">
+                    Nexus can combine Research, Coding, Reasoning, Web and PDF agents automatically based on your request.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
 
 function AgentPanel({ open, setOpen }) {
   if (!open) return null;
@@ -1242,6 +1462,7 @@ export default function NexusChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightPanel, setRightPanel] = useState(false);
+  const [aiControls, setAiControls] = useState(false);
   const [activeAgent, setActiveAgent] = useState('orchestrator');
   const [activeConversation, setActiveConversation] = useState(null);
   const [hasStartedChat, setHasStartedChat] = useState(false);
@@ -1424,6 +1645,7 @@ export default function NexusChatPage() {
           setActiveAgent={setActiveAgent}
           setSidebarOpen={setSidebarOpen}
           setRightPanel={setRightPanel}
+          setAiControls={setAiControls}
         />
 
         <div className="relative flex-1 min-h-0">
@@ -1449,6 +1671,7 @@ export default function NexusChatPage() {
           </div>
 
           <AgentPanel open={rightPanel} setOpen={setRightPanel} />
+          <AIControlsPanel open={aiControls} setOpen={setAiControls} />
         </div>
 
         {hasStartedChat && <ChatInput onSend={handleSendMessage} />}

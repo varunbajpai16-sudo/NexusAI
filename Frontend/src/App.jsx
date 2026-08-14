@@ -12,6 +12,8 @@ import NexusAbout from './pages/About';
 import Register from './pages/Regestration';
 import Pricing from './pages/View_pricing';
 import Documentation from './pages/Documentation';
+import NexusProfilePage from './pages/Profile';
+import NexusSettingsPage from './pages/Setting';
 function App() {
   const [count, setCount] = useState(0);
 
@@ -26,6 +28,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/documentation" element={<Documentation />} />
+        <Route path="/profile" element={<NexusProfilePage />} />
+        <Route path="/settings" element={<NexusSettingsPage />} />
       </Routes>
     </>
   );
