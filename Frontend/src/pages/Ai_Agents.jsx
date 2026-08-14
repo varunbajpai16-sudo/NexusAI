@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Sparkles,
   ArrowLeft,
@@ -25,8 +26,48 @@ import {
   BrainCircuit,
   Menu,
   X,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { NexusLogo } from '../components/Nexus_Logo';
+import { toggleDarkMode } from '../features/Toggle/Toggle_slice';
+
+// ─── Theme ────────────────────────────────────────────────────────────
+
+const getTheme = (dark) => ({
+  dark,
+
+  pageBg: dark ? 'bg-black' : 'bg-zinc-50',
+  pageText: dark ? 'text-white' : 'text-zinc-900',
+
+  navBg: dark ? 'bg-black/90' : 'bg-white/90',
+  cardBg: dark ? 'bg-white/[0.03]' : 'bg-black/[0.03]',
+  cardBgActive: dark ? 'bg-white/[0.06]' : 'bg-black/[0.05]',
+  cardBgHover: dark ? 'hover:bg-white/[0.05]' : 'hover:bg-black/[0.05]',
+  statBg: dark ? 'bg-white/[0.03]' : 'bg-black/[0.03]',
+  iconBg: dark ? 'bg-white/5' : 'bg-black/5',
+  iconBorder: dark ? 'border-white/10' : 'border-black/10',
+  pillBg: dark ? 'bg-white/5' : 'bg-black/5',
+
+  border: dark ? 'border-white/[0.06]' : 'border-zinc-200',
+  borderSubtle: dark ? 'border-white/5' : 'border-zinc-200',
+  borderStrong: dark ? 'border-white/10' : 'border-zinc-300',
+
+  text: dark ? 'text-white' : 'text-zinc-900',
+  text300: dark ? 'text-zinc-300' : 'text-zinc-700',
+  text400: dark ? 'text-zinc-400' : 'text-zinc-600',
+  text500: dark ? 'text-zinc-500' : 'text-zinc-500',
+  text600: dark ? 'text-zinc-600' : 'text-zinc-400',
+
+  hoverText: dark ? 'hover:text-white' : 'hover:text-zinc-900',
+  hoverBg: dark ? 'hover:bg-white/5' : 'hover:bg-black/5',
+
+  gridLine: dark
+    ? 'bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)]'
+    : 'bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)]',
+
+  fadeMaskBg: dark ? 'black' : 'white',
+});
 
 // ─── Reusable Components ─────────────────────────────────────────────
 
@@ -44,14 +85,14 @@ const GlowButton = ({
   className = '',
   onClick,
   icon: Icon,
+  theme,
 }) => {
   const base =
     'group relative inline-flex items-center justify-center gap-2 px-5 py-3 md:px-7 md:py-3.5 rounded-xl font-semibold text-sm transition-all duration-300 overflow-hidden';
   const styles = {
     primary:
       'bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-[0_0_30px_-5px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_-5px_rgba(220,38,38,0.7)] hover:scale-[1.02]',
-    secondary:
-      'bg-white/5 border border-white/10 text-white backdrop-blur-sm hover:bg-white/10 hover:border-red-500/30 hover:shadow-[0_0_30px_-10px_rgba(220,38,38,0.3)]',
+    secondary: `${theme?.dark ? 'bg-white/5 border border-white/10 text-white' : 'bg-black/5 border border-black/10 text-zinc-900'} backdrop-blur-sm ${theme?.hoverBg || 'hover:bg-white/10'} hover:border-red-500/30 hover:shadow-[0_0_30px_-10px_rgba(220,38,38,0.3)]`,
     outline:
       'border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.4)]',
   };
@@ -78,20 +119,21 @@ const GlassCard = ({
   className = '',
   glow = false,
   active = false,
+  theme,
 }) => (
   <div
-    className={`relative rounded-2xl border transition-all duration-500 ${active ? 'border-red-500/30 bg-white/[0.06] shadow-[0_0_50px_-15px_rgba(220,38,38,0.25)]' : 'border-white/[0.06] bg-white/[0.03] hover:border-red-500/20 hover:bg-white/[0.05]'} backdrop-blur-xl p-4 sm:p-6 ${glow ? 'shadow-[0_0_40px_-15px_rgba(220,38,38,0.15)]' : ''} ${className}`}
+    className={`relative rounded-2xl border transition-all duration-500 ${active ? `border-red-500/30 ${theme.cardBgActive} shadow-[0_0_50px_-15px_rgba(220,38,38,0.25)]` : `${theme.border} ${theme.cardBg} hover:border-red-500/20 ${theme.cardBgHover}`} backdrop-blur-xl p-4 sm:p-6 ${glow ? 'shadow-[0_0_40px_-15px_rgba(220,38,38,0.15)]' : ''} ${className}`}
   >
     {children}
   </div>
 );
 
-const SectionHeading = ({ subtitle, title, align = 'center' }) => (
+const SectionHeading = ({ subtitle, title, align = 'center', theme }) => (
   <div className={`mb-10 md:mb-14 ${align === 'center' ? 'text-center' : ''}`}>
     <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium tracking-wider uppercase bg-red-500/10 text-red-400 border border-red-500/20 mb-4">
       {subtitle}
     </span>
-    <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight">
+    <h2 className={`text-2xl sm:text-3xl md:text-5xl font-bold ${theme.text} leading-tight`}>
       {title}
     </h2>
   </div>
@@ -99,7 +141,7 @@ const SectionHeading = ({ subtitle, title, align = 'center' }) => (
 
 // ─── Navbar ──────────────────────────────────────────────────────────
 
-const Navbar = () => {
+const Navbar = ({ theme, darkMode, onToggleTheme }) => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -118,26 +160,26 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || mobileMenuOpen ? 'bg-black/90 backdrop-blur-xl border-b border-white/5' : 'bg-transparent'}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || mobileMenuOpen ? `${theme.navBg} backdrop-blur-xl border-b ${theme.borderSubtle}` : 'bg-transparent'}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-18">
           <a href="/" className="flex items-center gap-2.5 group">
             <div
-              className="
+              className={`
                 relative w-9 h-9 rounded-lg
-                bg-gradient-to-br from-zinc-950 via-black to-red-950/40
+                bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/40' : 'from-zinc-100 via-white to-red-100'}
                 border border-red-500/25
                 flex items-center justify-center
                 shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
                 group-hover:border-pink-500/50
                 group-hover:shadow-[0_0_28px_-5px_rgba(236,72,153,0.7)]
                 transition-all duration-300
-              "
+              `}
             >
               <NexusLogo size={27} />
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">
+            <span className={`text-xl font-bold ${theme.text} tracking-tight`}>
               Nexus<span className="text-red-500">AI</span>
             </span>
           </a>
@@ -148,7 +190,7 @@ const Navbar = () => {
               <a
                 key={link.label}
                 onClick={() => navigate(link.path)}
-                className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg cursor-pointer ${link.active ? 'text-white bg-white/5' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}
+                className={`px-4 py-2 text-sm font-medium transition-colors rounded-lg cursor-pointer ${link.active ? `${theme.text} ${theme.pillBg}` : `${theme.text400} ${theme.hoverText} ${theme.hoverBg}`}`}
               >
                 {link.label}
               </a>
@@ -158,22 +200,41 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-3">
             <a
               onClick={() => navigate('/login')}
-              className="px-5 py-2 text-sm font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer"
+              className={`px-5 py-2 text-sm font-medium ${theme.text300} ${theme.hoverText} transition-colors cursor-pointer`}
             >
               Login
             </a>
-            <GlowButton onClick={() => navigate('/register')} variant="primary" icon={ArrowRight}>
+
+            <button
+              onClick={onToggleTheme}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`w-10 h-10 rounded-xl border ${theme.iconBorder} ${theme.iconBg} flex items-center justify-center ${theme.text300} ${theme.hoverText} ${theme.hoverBg} transition-all`}
+            >
+              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
+            <GlowButton onClick={() => navigate('/register')} variant="primary" icon={ArrowRight} theme={theme}>
               Get Started
             </GlowButton>
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={onToggleTheme}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className={`w-9 h-9 rounded-lg border ${theme.iconBorder} ${theme.iconBg} flex items-center justify-center ${theme.text300} transition-colors`}
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`p-2 rounded-lg ${theme.text400} ${theme.hoverText} ${theme.hoverBg} transition-colors`}
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -181,7 +242,7 @@ const Navbar = () => {
       <div
         className={`md:hidden transition-all duration-300 overflow-hidden ${mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
       >
-        <div className="px-4 pb-6 pt-2 space-y-2 border-t border-white/5">
+        <div className={`px-4 pb-6 pt-2 space-y-2 border-t ${theme.borderSubtle}`}>
           {navLinks.map((link) => (
             <a
               key={link.label}
@@ -189,7 +250,7 @@ const Navbar = () => {
                 navigate(link.path);
                 setMobileMenuOpen(false);
               }}
-              className={`block px-4 py-3 rounded-lg text-sm font-medium cursor-pointer ${link.active ? 'text-white bg-white/5' : 'text-zinc-400 hover:text-white hover:bg-white/5'}`}
+              className={`block px-4 py-3 rounded-lg text-sm font-medium cursor-pointer ${link.active ? `${theme.text} ${theme.pillBg}` : `${theme.text400} ${theme.hoverText} ${theme.hoverBg}`}`}
             >
               {link.label}
             </a>
@@ -200,7 +261,7 @@ const Navbar = () => {
                 navigate('/login');
                 setMobileMenuOpen(false);
               }}
-              className="block px-4 py-3 text-center text-sm font-medium text-zinc-300 hover:text-white transition-colors cursor-pointer rounded-lg hover:bg-white/5"
+              className={`block px-4 py-3 text-center text-sm font-medium ${theme.text300} ${theme.hoverText} transition-colors cursor-pointer rounded-lg ${theme.hoverBg}`}
             >
               Login
             </a>
@@ -212,6 +273,7 @@ const Navbar = () => {
               variant="primary"
               icon={ArrowRight}
               className="w-full"
+              theme={theme}
             >
               Get Started
             </GlowButton>
@@ -224,21 +286,21 @@ const Navbar = () => {
 
 // ─── Hero Section ────────────────────────────────────────────────────
 
-const HeroSection = () => (
+const HeroSection = ({ theme }) => (
   <section className="relative min-h-[50vh] sm:min-h-[60vh] flex items-center justify-center pt-24 sm:pt-32 pb-16 sm:pb-20 overflow-hidden">
-    <div className="absolute inset-0 bg-black">
+    <div className={`absolute inset-0 ${theme.pageBg}`}>
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] sm:w-[900px] h-[400px] sm:h-[600px] bg-red-600/8 rounded-full blur-[150px]" />
       <div className="absolute bottom-0 left-1/4 w-[300px] sm:w-[500px] h-[250px] sm:h-[400px] bg-pink-600/6 rounded-full blur-[120px]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,black_70%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px] sm:bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]" />
+      <div className={`absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,${theme.fadeMaskBg}_70%)]`} />
+      <div className={`absolute inset-0 ${theme.gridLine} bg-[size:40px_40px] sm:bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]`} />
     </div>
     <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
-      <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-[1.1] sm:leading-[1.05] mb-4 sm:mb-6 tracking-tight">
+      <h1 className={`text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold ${theme.text} leading-[1.1] sm:leading-[1.05] mb-4 sm:mb-6 tracking-tight`}>
         Meet the <GradientText>Minds</GradientText>
         <br />
         Behind the Magic
       </h1>
-      <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-zinc-400 leading-relaxed px-2 sm:px-0">
+      <p className={`max-w-2xl mx-auto text-base sm:text-lg md:text-xl ${theme.text400} leading-relaxed px-2 sm:px-0`}>
         Six specialized AI agents, each engineered for a specific domain.
         Together, they form an unstoppable collective intelligence that tackles
         your most complex challenges.
@@ -249,7 +311,7 @@ const HeroSection = () => (
 
 // ─── Agent Detail Cards ──────────────────────────────────────────────
 
-const AgentShowcase = () => {
+const AgentShowcase = ({ theme }) => {
   const [activeAgent, setActiveAgent] = useState(0);
 
   const agents = [
@@ -416,12 +478,13 @@ const AgentShowcase = () => {
 
   return (
     <section className="relative py-16 sm:py-24 md:py-32">
-      <div className="absolute inset-0 bg-black">
+      <div className={`absolute inset-0 ${theme.pageBg}`}>
         <div className="absolute top-0 right-0 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-red-600/5 rounded-full blur-[150px]" />
       </div>
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           subtitle="Agent Details"
+          theme={theme}
           title={
             <>
               Explore Each <GradientText>Specialist</GradientText>
@@ -443,8 +506,8 @@ const AgentShowcase = () => {
                     onClick={() => setActiveAgent(i)}
                     className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all duration-300 text-left shrink-0 ${
                       isActive
-                        ? 'border-red-500/30 bg-white/[0.06] shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]'
-                        : 'border-white/[0.06] bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]'
+                        ? `border-red-500/30 ${theme.cardBgActive} shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]`
+                        : `${theme.border} ${theme.cardBg} hover:${theme.borderStrong} ${theme.cardBgHover}`
                     }`}
                   >
                     <div
@@ -453,7 +516,7 @@ const AgentShowcase = () => {
                       <AIcon size={16} className="text-white" />
                     </div>
                     <span
-                      className={`text-sm font-bold ${isActive ? 'text-white' : 'text-zinc-300'} whitespace-nowrap`}
+                      className={`text-sm font-bold ${isActive ? theme.text : theme.text300} whitespace-nowrap`}
                     >
                       {agent.name}
                     </span>
@@ -473,8 +536,8 @@ const AgentShowcase = () => {
                     onClick={() => setActiveAgent(i)}
                     className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-300 text-left group ${
                       isActive
-                        ? 'border-red-500/30 bg-white/[0.06] shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]'
-                        : 'border-white/[0.06] bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]'
+                        ? `border-red-500/30 ${theme.cardBgActive} shadow-[0_0_30px_-10px_rgba(220,38,38,0.2)]`
+                        : `${theme.border} ${theme.cardBg} hover:${theme.borderStrong} ${theme.cardBgHover}`
                     }`}
                   >
                     <div
@@ -484,17 +547,17 @@ const AgentShowcase = () => {
                     </div>
                     <div className="min-w-0">
                       <h3
-                        className={`text-sm font-bold ${isActive ? 'text-white' : 'text-zinc-300 group-hover:text-white'} transition-colors`}
+                        className={`text-sm font-bold ${isActive ? theme.text : `${theme.text300} group-hover:${theme.dark ? 'text-white' : 'text-zinc-900'}`} transition-colors`}
                       >
                         {agent.name}
                       </h3>
-                      <p className="text-xs text-zinc-500 truncate">
+                      <p className={`text-xs ${theme.text500} truncate`}>
                         {agent.tagline}
                       </p>
                     </div>
                     <ChevronRight
                       size={16}
-                      className={`ml-auto shrink-0 transition-all ${isActive ? 'text-red-400 translate-x-0' : 'text-zinc-600 -translate-x-1 group-hover:translate-x-0'}`}
+                      className={`ml-auto shrink-0 transition-all ${isActive ? 'text-red-400 translate-x-0' : `${theme.text600} -translate-x-1 group-hover:translate-x-0`}`}
                     />
                   </button>
                 );
@@ -504,7 +567,7 @@ const AgentShowcase = () => {
 
           {/* Agent Detail Panel */}
           <div className="lg:col-span-8">
-            <GlassCard active glow className="h-full">
+            <GlassCard active glow theme={theme} className="h-full">
               {/* Header */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 mb-6 sm:mb-8">
                 <div
@@ -514,19 +577,19 @@ const AgentShowcase = () => {
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white">
+                    <h3 className={`text-xl sm:text-2xl font-bold ${theme.text}`}>
                       {active.name}
                     </h3>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
                       Active
                     </span>
                   </div>
-                  <p className="text-sm text-zinc-400">{active.tagline}</p>
+                  <p className={`text-sm ${theme.text400}`}>{active.tagline}</p>
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-zinc-300 leading-relaxed mb-6 sm:mb-8 text-sm sm:text-base">
+              <p className={`${theme.text300} leading-relaxed mb-6 sm:mb-8 text-sm sm:text-base`}>
                 {active.description}
               </p>
 
@@ -535,12 +598,12 @@ const AgentShowcase = () => {
                 {Object.entries(active.stats).map(([key, value]) => (
                   <div
                     key={key}
-                    className="text-center p-3 sm:p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]"
+                    className={`text-center p-3 sm:p-4 rounded-xl ${theme.statBg} border ${theme.borderSubtle}`}
                   >
-                    <div className="text-lg sm:text-xl font-bold text-white mb-1">
+                    <div className={`text-lg sm:text-xl font-bold ${theme.text} mb-1`}>
                       {value}
                     </div>
-                    <div className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider">
+                    <div className={`text-[10px] sm:text-xs ${theme.text500} uppercase tracking-wider`}>
                       {key}
                     </div>
                   </div>
@@ -551,7 +614,7 @@ const AgentShowcase = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                 {/* Capabilities */}
                 <div>
-                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <h4 className={`text-sm font-semibold ${theme.text} uppercase tracking-wider mb-4 flex items-center gap-2`}>
                     <Zap size={14} className="text-red-400" />
                     Capabilities
                   </h4>
@@ -559,7 +622,7 @@ const AgentShowcase = () => {
                     {active.capabilities.map((cap, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-3 text-sm text-zinc-400"
+                        className={`flex items-start gap-3 text-sm ${theme.text400}`}
                       >
                         <CheckCircle2
                           size={16}
@@ -573,7 +636,7 @@ const AgentShowcase = () => {
 
                 {/* Use Cases */}
                 <div>
-                  <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <h4 className={`text-sm font-semibold ${theme.text} uppercase tracking-wider mb-4 flex items-center gap-2`}>
                     <Target size={14} className="text-pink-400" />
                     Perfect For
                   </h4>
@@ -581,7 +644,7 @@ const AgentShowcase = () => {
                     {active.useCases.map((use, i) => (
                       <span
                         key={i}
-                        className="px-3 py-1.5 text-xs font-medium text-zinc-300 bg-white/5 rounded-lg border border-white/5"
+                        className={`px-3 py-1.5 text-xs font-medium ${theme.text300} ${theme.pillBg} rounded-lg border ${theme.borderSubtle}`}
                       >
                         {use}
                       </span>
@@ -589,12 +652,12 @@ const AgentShowcase = () => {
                   </div>
 
                   {/* Example Query */}
-                  <div className="mt-6 p-3 sm:p-4 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                    <h5 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <div className={`mt-6 p-3 sm:p-4 rounded-xl ${theme.statBg} border ${theme.borderSubtle}`}>
+                    <h5 className={`text-xs font-semibold ${theme.text500} uppercase tracking-wider mb-2 flex items-center gap-2`}>
                       <MessageSquare size={12} />
                       Example Query
                     </h5>
-                    <p className="text-xs sm:text-sm text-zinc-400 italic leading-relaxed">
+                    <p className={`text-xs sm:text-sm ${theme.text400} italic leading-relaxed`}>
                       {active.example}
                     </p>
                   </div>
@@ -610,14 +673,15 @@ const AgentShowcase = () => {
 
 // ─── Collaboration Diagram ───────────────────────────────────────────
 
-const CollaborationSection = () => (
+const CollaborationSection = ({ theme }) => (
   <section className="relative py-16 sm:py-24 md:py-32 overflow-hidden">
-    <div className="absolute inset-0 bg-black">
+    <div className={`absolute inset-0 ${theme.pageBg}`}>
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] sm:w-[800px] h-[300px] sm:h-[400px] bg-pink-600/5 rounded-full blur-[150px]" />
     </div>
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeading
         subtitle="Synergy"
+        theme={theme}
         title={
           <>
             How They <GradientText>Collaborate</GradientText>
@@ -649,20 +713,20 @@ const CollaborationSection = () => (
             color: 'rose',
           },
         ].map((item, i) => (
-          <GlassCard key={i} glow className="text-center group">
+          <GlassCard key={i} glow theme={theme} className="text-center group">
             <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 mb-4 sm:mb-6">
               <div
                 className={`absolute inset-0 rounded-2xl bg-${item.color}-600/20 blur-xl group-hover:bg-${item.color}-600/30 transition-all`}
               />
-              <div className="relative w-full h-full rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <div className={`relative w-full h-full rounded-2xl ${theme.iconBg} border ${theme.iconBorder} flex items-center justify-center`}>
                 <item.icon size={24} className={`sm:w-7 sm:h-7 text-${item.color}-400`} />
               </div>
-              <span className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black border border-red-500/30 text-red-400 text-xs font-bold flex items-center justify-center">
+              <span className={`absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full ${theme.pageBg} border border-red-500/30 text-red-400 text-xs font-bold flex items-center justify-center`}>
                 {item.step}
               </span>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">{item.title}</h3>
-            <p className="text-sm sm:text-base text-zinc-400 leading-relaxed">{item.desc}</p>
+            <h3 className={`text-lg sm:text-xl font-bold ${theme.text} mb-2 sm:mb-3`}>{item.title}</h3>
+            <p className={`text-sm sm:text-base ${theme.text400} leading-relaxed`}>{item.desc}</p>
           </GlassCard>
         ))}
       </div>
@@ -682,10 +746,10 @@ const CollaborationSection = () => (
             { icon: Cpu, label: 'Orchestrator', color: '#ec4899' },
           ].map((agent, i) => (
             <div key={i} className="flex flex-col items-center gap-2 sm:gap-3">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:border-red-500/30 hover:bg-white/[0.07] transition-all duration-300">
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${theme.iconBg} border ${theme.iconBorder} flex items-center justify-center hover:border-red-500/30 ${theme.cardBgHover} transition-all duration-300`}>
                 <agent.icon size={18} className="sm:w-[22px] sm:h-[22px]" style={{ color: agent.color }} />
               </div>
-              <span className="text-[10px] sm:text-xs font-medium text-zinc-500 text-center">
+              <span className={`text-[10px] sm:text-xs font-medium ${theme.text500} text-center`}>
                 {agent.label}
               </span>
             </div>
@@ -698,9 +762,9 @@ const CollaborationSection = () => (
 
 // ─── Performance Stats ───────────────────────────────────────────────
 
-const StatsSection = () => (
-  <section className="relative py-16 sm:py-20 border-y border-white/5">
-    <div className="absolute inset-0 bg-black">
+const StatsSection = ({ theme }) => (
+  <section className={`relative py-16 sm:py-20 border-y ${theme.borderSubtle}`}>
+    <div className={`absolute inset-0 ${theme.pageBg}`}>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[600px] h-[200px] sm:h-[300px] bg-red-600/5 rounded-full blur-[120px]" />
     </div>
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -712,13 +776,13 @@ const StatsSection = () => (
           { value: '50+', label: 'Languages Supported', icon: Globe },
         ].map((stat, i) => (
           <div key={i} className="group">
-            <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/5 border border-white/10 mb-3 sm:mb-4 group-hover:border-red-500/30 transition-colors">
+            <div className={`inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl ${theme.iconBg} border ${theme.iconBorder} mb-3 sm:mb-4 group-hover:border-red-500/30 transition-colors`}>
               <stat.icon size={18} className="sm:w-5 sm:h-5 text-red-400" />
             </div>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1 sm:mb-2">
+            <div className={`text-2xl sm:text-3xl md:text-4xl font-bold ${theme.text} mb-1 sm:mb-2`}>
               {stat.value}
             </div>
-            <div className="text-xs sm:text-sm text-zinc-500">{stat.label}</div>
+            <div className={`text-xs sm:text-sm ${theme.text500}`}>{stat.label}</div>
           </div>
         ))}
       </div>
@@ -728,14 +792,15 @@ const StatsSection = () => (
 
 // ─── Testimonials ────────────────────────────────────────────────────
 
-const TestimonialsSection = () => (
+const TestimonialsSection = ({ theme }) => (
   <section className="relative py-16 sm:py-24 md:py-32">
-    <div className="absolute inset-0 bg-black">
+    <div className={`absolute inset-0 ${theme.pageBg}`}>
       <div className="absolute top-0 left-1/4 w-[300px] sm:w-[500px] h-[250px] sm:h-[400px] bg-red-600/5 rounded-full blur-[150px]" />
     </div>
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <SectionHeading
         subtitle="Reviews"
+        theme={theme}
         title={
           <>
             Trusted by <GradientText>Innovators</GradientText>
@@ -766,13 +831,13 @@ const TestimonialsSection = () => (
             rating: 5,
           },
         ].map((t, i) => (
-          <GlassCard key={i} glow className="group">
+          <GlassCard key={i} glow theme={theme} className="group">
             <div className="flex gap-1 mb-3 sm:mb-4">
               {Array.from({ length: t.rating }).map((_, j) => (
                 <Star key={j} size={14} className="text-red-400 fill-red-400" />
               ))}
             </div>
-            <p className="text-zinc-300 leading-relaxed mb-5 sm:mb-6 text-sm">
+            <p className={`${theme.text300} leading-relaxed mb-5 sm:mb-6 text-sm`}>
               "{t.quote}"
             </p>
             <div className="flex items-center gap-3">
@@ -783,10 +848,10 @@ const TestimonialsSection = () => (
                   .join('')}
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-white truncate">
+                <div className={`text-sm font-semibold ${theme.text} truncate`}>
                   {t.author}
                 </div>
-                <div className="text-xs text-zinc-500 truncate">{t.role}</div>
+                <div className={`text-xs ${theme.text500} truncate`}>{t.role}</div>
               </div>
             </div>
           </GlassCard>
@@ -798,24 +863,24 @@ const TestimonialsSection = () => (
 
 // ─── CTA Section ─────────────────────────────────────────────────────
 
-const CTASection = ({ navigate }) => (
+const CTASection = ({ navigate, theme }) => (
   <section className="relative py-16 sm:py-24 md:py-32">
-    <div className="absolute inset-0 bg-black">
+    <div className={`absolute inset-0 ${theme.pageBg}`}>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-red-950/10 to-transparent" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[700px] h-[250px] sm:h-[400px] bg-red-600/10 rounded-full blur-[150px]" />
     </div>
     <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <GlassCard glow className="py-10 sm:py-16 px-6 sm:px-8 md:px-16 border-red-500/10">
+      <GlassCard glow theme={theme} className="py-10 sm:py-16 px-6 sm:px-8 md:px-16 border-red-500/10">
         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-red-500/10 text-red-400 text-xs sm:text-sm font-medium mb-4 sm:mb-6 border border-red-500/20">
           <Play size={14} />
           Start collaborating now
         </div>
-        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
+        <h2 className={`text-2xl sm:text-3xl md:text-5xl font-bold ${theme.text} mb-4 sm:mb-6 leading-tight`}>
           Your AI Team is
           <br />
           <GradientText>Ready to Work</GradientText>
         </h2>
-        <p className="text-base sm:text-lg text-zinc-400 mb-8 sm:mb-10 max-w-xl mx-auto px-2 sm:px-0">
+        <p className={`text-base sm:text-lg ${theme.text400} mb-8 sm:mb-10 max-w-xl mx-auto px-2 sm:px-0`}>
           Pick any agent — or let the Orchestrator choose for you. Your first
           query is free and instant.
         </p>
@@ -825,6 +890,7 @@ const CTASection = ({ navigate }) => (
             icon={ArrowRight}
             onClick={() => navigate('/chat')}
             className="w-full sm:w-auto text-base px-8 sm:px-10 py-4"
+            theme={theme}
           >
             Start Chatting
           </GlowButton>
@@ -832,6 +898,7 @@ const CTASection = ({ navigate }) => (
             onClick={() => navigate('/documentation')}
             variant="outline"
             className="w-full sm:w-auto text-base px-8 sm:px-10 py-4"
+            theme={theme}
           >
             View Documentation
           </GlowButton>
@@ -843,42 +910,42 @@ const CTASection = ({ navigate }) => (
 
 // ─── Footer ──────────────────────────────────────────────────────────
 
-const Footer = () => (
-  <footer className="relative border-t border-white/5 bg-black">
+const Footer = ({ theme }) => (
+  <footer className={`relative border-t ${theme.borderSubtle} ${theme.pageBg}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-2.5">
           <div
-            className="
+            className={`
               relative w-9 h-9 rounded-lg
-              bg-gradient-to-br from-zinc-950 via-black to-red-950/40
+              bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/40' : 'from-zinc-100 via-white to-red-100'}
               border border-red-500/25
               flex items-center justify-center
               shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
               transition-all duration-300
-            "
+            `}
           >
             <NexusLogo size={20} />
           </div>
-          <span className="text-lg font-bold text-white">
+          <span className={`text-lg font-bold ${theme.text}`}>
             Nexus<span className="text-red-500">AI</span>
           </span>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm text-zinc-500">
-          <a href="/" className="hover:text-zinc-300 transition-colors">
+        <div className={`flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-sm ${theme.text500}`}>
+          <a href="/" className={`hover:${theme.text300} transition-colors`}>
             Home
           </a>
-          <a href="#" className="hover:text-zinc-300 transition-colors">
+          <a href="#" className={`hover:${theme.text300} transition-colors`}>
             Agents
           </a>
-          <a href="#" className="hover:text-zinc-300 transition-colors">
+          <a href="#" className={`hover:${theme.text300} transition-colors`}>
             Privacy
           </a>
-          <a href="#" className="hover:text-zinc-300 transition-colors">
+          <a href="#" className={`hover:${theme.text300} transition-colors`}>
             Terms
           </a>
         </div>
-        <p className="text-xs sm:text-sm text-zinc-600 text-center md:text-right">
+        <p className={`text-xs sm:text-sm ${theme.text600} text-center md:text-right`}>
           © 2026 Nexus AI. All rights reserved.
         </p>
       </div>
@@ -890,16 +957,21 @@ const Footer = () => (
 
 export default function NexusAIAgents() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const darkMode = useSelector((state) => state.toggle.darkMode);
+  const theme = getTheme(darkMode);
+  const handleToggleTheme = () => dispatch(toggleDarkMode());
+
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-red-500/30 selection:text-red-200">
-      <Navbar />
-      <HeroSection />
-      <AgentShowcase />
-      <CollaborationSection />
-      <StatsSection />
-      <TestimonialsSection />
-      <CTASection navigate={navigate} />
-      <Footer />
+    <div className={`min-h-screen ${theme.pageBg} ${theme.pageText} selection:bg-red-500/30 selection:text-red-200`}>
+      <Navbar theme={theme} darkMode={darkMode} onToggleTheme={handleToggleTheme} />
+      <HeroSection theme={theme} />
+      <AgentShowcase theme={theme} />
+      <CollaborationSection theme={theme} />
+      <StatsSection theme={theme} />
+      <TestimonialsSection theme={theme} />
+      <CTASection navigate={navigate} theme={theme} />
+      <Footer theme={theme} />
     </div>
   );
 }

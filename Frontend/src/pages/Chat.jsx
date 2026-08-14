@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   ArrowUp,
   Brain,
@@ -19,6 +20,7 @@ import {
   MessageSquare,
   Mic,
   MoreHorizontal,
+  Moon,
   Paperclip,
   Plus,
   RefreshCcw,
@@ -27,6 +29,7 @@ import {
   Settings2,
   Sparkles,
   Square,
+  Sun,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -42,6 +45,59 @@ import {
 } from 'lucide-react';
 
 import { NexusLogo } from '../components/Nexus_Logo';
+import { toggleDarkMode } from '../features/Toggle/Toggle_slice';
+
+/* ─────────────────────────────────────────────────────────────
+   THEME
+───────────────────────────────────────────────────────────── */
+
+const getTheme = (dark) => ({
+  dark,
+
+  pageBg: dark ? 'bg-black' : 'bg-zinc-50',
+  pageText: dark ? 'text-white' : 'text-zinc-900',
+
+  sidebarBg: dark ? 'bg-[#050505]' : 'bg-white',
+  panelBg: dark ? 'bg-[#070707]/95' : 'bg-white/95',
+  dropdownBg: dark ? 'bg-[#0b0b0b]/95' : 'bg-white/95',
+  inputBg: dark ? 'bg-[#0a0a0a]' : 'bg-white',
+  promptBg: dark ? 'bg-[#090909]' : 'bg-white',
+  headerBg: dark ? 'bg-black/70' : 'bg-white/80',
+
+  border: dark ? 'border-white/[0.06]' : 'border-zinc-200',
+  borderStrong: dark ? 'border-white/[0.08]' : 'border-zinc-300',
+  borderSubtle: dark ? 'border-white/[0.05]' : 'border-zinc-100',
+
+  text: dark ? 'text-white' : 'text-zinc-900',
+  text200: dark ? 'text-zinc-200' : 'text-zinc-800',
+  text300: dark ? 'text-zinc-300' : 'text-zinc-600',
+  text400: dark ? 'text-zinc-400' : 'text-zinc-600',
+  text500: dark ? 'text-zinc-500' : 'text-zinc-500',
+  text600: dark ? 'text-zinc-600' : 'text-zinc-400',
+  text700: dark ? 'text-zinc-700' : 'text-zinc-400',
+
+  surface: dark ? 'bg-white/[0.03]' : 'bg-black/[0.03]',
+  surface2: dark ? 'bg-white/[0.025]' : 'bg-black/[0.025]',
+  surfaceHover: dark ? 'hover:bg-white/[0.04]' : 'hover:bg-black/[0.04]',
+  surfaceHover2: dark ? 'hover:bg-white/[0.05]' : 'hover:bg-black/[0.05]',
+  surfaceHover3: dark ? 'hover:bg-white/[0.06]' : 'hover:bg-black/[0.06]',
+  surfaceHover7: dark ? 'hover:bg-white/[0.07]' : 'hover:bg-black/[0.07]',
+
+  iconBtnBg: dark ? 'bg-white/[0.03]' : 'bg-black/[0.03]',
+  iconBtnBorder: dark ? 'border-white/[0.06]' : 'border-black/[0.08]',
+  iconBtnHoverBorder: dark ? 'hover:border-white/10' : 'hover:border-black/15',
+
+  activeItemBg: dark ? 'bg-white/[0.06]' : 'bg-black/[0.05]',
+  activeItemBorder: dark ? 'border-white/[0.07]' : 'border-black/[0.08]',
+
+  backdrop: dark ? 'bg-black/60' : 'bg-black/20',
+  toggleOff: dark ? 'bg-white/[0.12]' : 'bg-black/[0.14]',
+  placeholder: dark ? 'placeholder:text-zinc-600' : 'placeholder:text-zinc-400',
+
+  gridLine: dark
+    ? 'bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] opacity-[0.018]'
+    : 'bg-[linear-gradient(rgba(0,0,0,1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,1)_1px,transparent_1px)] opacity-[0.025]',
+});
 
 /* ─────────────────────────────────────────────────────────────
    DATA
@@ -130,6 +186,7 @@ const IconButton = ({
   title,
   onClick,
   active = false,
+  theme,
 }) => {
   return (
     <button
@@ -142,7 +199,7 @@ const IconButton = ({
         ${
           active
             ? 'bg-red-500/10 border-red-500/30 text-red-400'
-            : 'bg-white/[0.03] border-white/[0.06] text-zinc-500 hover:text-white hover:bg-white/[0.07] hover:border-white/10'
+            : `${theme.iconBtnBg} ${theme.iconBtnBorder} ${theme.text600} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover7} ${theme.iconBtnHoverBorder}`
         }
         ${className}
       `}
@@ -152,7 +209,7 @@ const IconButton = ({
   );
 };
 
-const GlassButton = ({ children, onClick, className = '', active = false }) => {
+const GlassButton = ({ children, onClick, className = '', active = false, theme }) => {
   return (
     <button
       onClick={onClick}
@@ -163,7 +220,7 @@ const GlassButton = ({ children, onClick, className = '', active = false }) => {
         ${
           active
             ? 'bg-red-500/10 border-red-500/30 text-red-400'
-            : 'bg-white/[0.03] border-white/[0.06] text-zinc-400 hover:text-white hover:bg-white/[0.06]'
+            : `${theme.iconBtnBg} ${theme.iconBtnBorder} ${theme.text400} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover3}`
         }
         ${className}
       `}
@@ -184,7 +241,8 @@ function Sidebar({
   setActiveConversation,
   setHasStartedChat,
   setSidebarOpen,
-  navigate
+  navigate,
+  theme,
 }) {
   const isRail = collapsed;
   const [accountMenu, setAccountMenu] = useState(false);
@@ -193,8 +251,8 @@ function Sidebar({
     <aside
       className={`
         h-screen
-        bg-[#050505]
-        border-r border-white/[0.06]
+        ${theme.sidebarBg}
+        border-r ${theme.border}
         flex flex-col
         transition-all duration-300
         ${isRail ? 'w-[76px]' : 'w-[260px] sm:w-[280px] lg:w-[285px]'}
@@ -208,28 +266,28 @@ function Sidebar({
       >
         {/* Logo */}
         <div
-          className={`h-[64px] md:h-[72px] flex items-center border-b border-white/[0.05] ${
+          className={`h-[64px] md:h-[72px] flex items-center border-b ${theme.borderSubtle} ${
             isRail ? 'justify-center px-2' : 'justify-between px-4 md:px-5'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
             <div
-            onClick={()=>navigate("/")}
-              className="
+              onClick={() => navigate('/')}
+              className={`
                 hover:cursor-pointer
                 shrink-0
                 w-9 h-9 rounded-xl
-                bg-gradient-to-br from-zinc-950 via-black to-red-950/50
+                bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/50' : 'from-zinc-100 via-white to-red-100'}
                 border border-red-500/25
                 flex items-center justify-center
                 shadow-[0_0_20px_-5px_rgba(244,63,94,0.5)]
-              "
+              `}
             >
               <NexusLogo size={25} />
             </div>
 
             {!isRail && (
-              <span className="text-lg font-bold text-white tracking-tight truncate">
+              <span className={`text-lg font-bold ${theme.text} tracking-tight truncate`}>
                 Nexus<span className="text-red-500">AI</span>
               </span>
             )}
@@ -238,7 +296,7 @@ function Sidebar({
           {!isRail && (
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden shrink-0 text-zinc-500 hover:text-white"
+              className={`lg:hidden shrink-0 ${theme.text600} hover:${theme.dark ? 'text-white' : 'text-zinc-900'}`}
             >
               <X size={20} />
             </button>
@@ -274,7 +332,7 @@ function Sidebar({
         <div className={`mb-4 ${isRail ? 'px-2' : 'px-3'}`}>
           <button
             title="All conversations"
-            className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] text-sm ${
+            className={`w-full flex items-center gap-3 py-2.5 rounded-xl ${theme.text400} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover} text-sm ${
               isRail ? 'justify-center px-0' : 'px-3'
             }`}
           >
@@ -285,7 +343,7 @@ function Sidebar({
           <button
             title="Explore agents"
             onClick={() => navigate('/agents')}
-            className={`w-full flex items-center gap-3 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] text-sm ${
+            className={`w-full flex items-center gap-3 py-2.5 rounded-xl ${theme.text400} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover} text-sm ${
               isRail ? 'justify-center px-0' : 'px-3'
             }`}
           >
@@ -297,7 +355,7 @@ function Sidebar({
         {/* Conversations */}
         {!isRail && (
           <div className="flex-1 overflow-y-auto px-3">
-            <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-zinc-600 font-semibold">
+            <div className={`px-3 mb-2 text-[10px] uppercase tracking-[0.18em] ${theme.text700} font-semibold`}>
               Recent
             </div>
 
@@ -314,8 +372,8 @@ function Sidebar({
                       transition-all duration-200
                       ${
                         active
-                          ? 'bg-white/[0.06] border border-white/[0.07]'
-                          : 'border border-transparent hover:bg-white/[0.035]'
+                          ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
+                          : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
                       }
                     `}
                   >
@@ -323,27 +381,27 @@ function Sidebar({
                       <MessageSquare
                         size={15}
                         className={`mt-0.5 shrink-0 ${
-                          active ? 'text-red-400' : 'text-zinc-600'
+                          active ? 'text-red-400' : theme.text600
                         }`}
                       />
 
                       <div className="min-w-0">
                         <p
                           className={`text-sm truncate ${
-                            active ? 'text-zinc-200' : 'text-zinc-400'
+                            active ? theme.text200 : theme.text400
                           }`}
                         >
                           {conversation.title}
                         </p>
 
-                        <p className="text-[11px] text-zinc-700 mt-1">
+                        <p className={`text-[11px] ${theme.text700} mt-1`}>
                           {conversation.time}
                         </p>
                       </div>
 
                       <MoreHorizontal
                         size={15}
-                        className="ml-auto opacity-0 group-hover:opacity-100 text-zinc-600 shrink-0"
+                        className={`ml-auto opacity-0 group-hover:opacity-100 ${theme.text600} shrink-0`}
                       />
                     </div>
                   </button>
@@ -356,8 +414,9 @@ function Sidebar({
         {isRail && <div className="flex-1" />}
 
         {/* Collapse toggle (desktop/tablet only) */}
-        <div className={`hidden lg:flex p-3 border-t border-white/[0.05] ${isRail ? 'justify-center' : 'justify-end'}`}>
+        <div className={`hidden lg:flex p-3 border-t ${theme.borderSubtle} ${isRail ? 'justify-center' : 'justify-end'}`}>
           <IconButton
+            theme={theme}
             title={isRail ? 'Expand sidebar' : 'Collapse sidebar'}
             onClick={() => setCollapsed(!isRail)}
           >
@@ -369,9 +428,9 @@ function Sidebar({
         </div>
 
         {/* User / Account */}
-        <div className={`relative p-3 border-t border-white/[0.05] ${isRail ? 'lg:border-t-0' : ''}`}>
+        <div className={`relative p-3 border-t ${theme.borderSubtle} ${isRail ? 'lg:border-t-0' : ''}`}>
           <div
-            className={`flex items-center gap-3 p-2 md:p-3 rounded-xl hover:bg-white/[0.04] ${
+            className={`flex items-center gap-3 p-2 md:p-3 rounded-xl ${theme.surfaceHover} ${
               isRail ? 'justify-center' : ''
             }`}
             title="Varun"
@@ -391,13 +450,13 @@ function Sidebar({
                   className="min-w-0 flex-1 text-left"
                   title="Profile"
                 >
-                  <p className="text-sm text-white truncate">Varun</p>
-                  <p className="text-[11px] text-zinc-600">Free plan</p>
+                  <p className={`text-sm ${theme.text} truncate`}>Varun</p>
+                  <p className={`text-[11px] ${theme.text600}`}>Free plan</p>
                 </button>
 
                 <button
                   onClick={() => setAccountMenu(!accountMenu)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-white hover:bg-white/[0.06] transition"
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${theme.text600} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover3} transition`}
                   title="Account settings"
                 >
                   <Settings2 size={17} />
@@ -412,18 +471,18 @@ function Sidebar({
                 onClick={() => setAccountMenu(false)}
                 className="fixed inset-0 z-40"
               />
-              <div className="absolute bottom-[72px] right-3 left-3 z-50 rounded-2xl border border-white/[0.08] bg-[#0b0b0b]/95 backdrop-blur-2xl shadow-2xl p-2">
+              <div className={`absolute bottom-[72px] right-3 left-3 z-50 rounded-2xl border ${theme.borderStrong} ${theme.dropdownBg} backdrop-blur-2xl shadow-2xl p-2`}>
                 <button
                   onClick={() => {
                     setAccountMenu(false);
                     navigate('/profile');
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-white/[0.05] transition"
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl text-left ${theme.surfaceHover2} transition`}
                 >
-                  <User size={16} className="text-zinc-400" />
+                  <User size={16} className={theme.text400} />
                   <div>
-                    <p className="text-xs text-zinc-200">Profile</p>
-                    <p className="text-[10px] text-zinc-600 mt-0.5">Manage your account</p>
+                    <p className={`text-xs ${theme.text200}`}>Profile</p>
+                    <p className={`text-[10px] ${theme.text600} mt-0.5`}>Manage your account</p>
                   </div>
                 </button>
 
@@ -432,12 +491,12 @@ function Sidebar({
                     setAccountMenu(false);
                     navigate('/settings');
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-white/[0.05] transition"
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl text-left ${theme.surfaceHover2} transition`}
                 >
-                  <Settings2 size={16} className="text-zinc-400" />
+                  <Settings2 size={16} className={theme.text400} />
                   <div>
-                    <p className="text-xs text-zinc-200">Settings</p>
-                    <p className="text-[10px] text-zinc-600 mt-0.5">Workspace preferences</p>
+                    <p className={`text-xs ${theme.text200}`}>Settings</p>
+                    <p className={`text-[10px] ${theme.text600} mt-0.5`}>Workspace preferences</p>
                   </div>
                 </button>
 
@@ -446,16 +505,16 @@ function Sidebar({
                     setAccountMenu(false);
                     navigate('/pricing');
                   }}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-white/[0.05] transition"
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl text-left ${theme.surfaceHover2} transition`}
                 >
                   <Zap size={16} className="text-red-400" />
                   <div>
-                    <p className="text-xs text-zinc-200">Billing & plan</p>
-                    <p className="text-[10px] text-zinc-600 mt-0.5">Manage your subscription</p>
+                    <p className={`text-xs ${theme.text200}`}>Billing & plan</p>
+                    <p className={`text-[10px] ${theme.text600} mt-0.5`}>Manage your subscription</p>
                   </div>
                 </button>
 
-                <div className="my-1 border-t border-white/[0.05]" />
+                <div className={`my-1 border-t ${theme.borderSubtle}`} />
 
                 <button
                   onClick={() => setAccountMenu(false)}
@@ -464,7 +523,7 @@ function Sidebar({
                   <X size={16} className="text-red-400" />
                   <div>
                     <p className="text-xs text-red-300">Sign out</p>
-                    <p className="text-[10px] text-zinc-600 mt-0.5">End this session</p>
+                    <p className={`text-[10px] ${theme.text600} mt-0.5`}>End this session</p>
                   </div>
                 </button>
               </div>
@@ -486,6 +545,9 @@ function TopBar({
   setSidebarOpen,
   setRightPanel,
   setAiControls,
+  theme,
+  darkMode,
+  onToggleTheme,
 }) {
   const [agentMenu, setAgentMenu] = useState(false);
 
@@ -495,18 +557,18 @@ function TopBar({
 
   return (
     <header
-      className="
+      className={`
         h-[64px] md:h-[72px] shrink-0
-        border-b border-white/[0.06]
-        bg-black/70 backdrop-blur-2xl
+        border-b ${theme.border}
+        ${theme.headerBg} backdrop-blur-2xl
         flex items-center justify-between
         px-3 sm:px-4 md:px-6
         relative z-30
-      "
+      `}
     >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile / tablet menu */}
-        <IconButton className="lg:hidden shrink-0" onClick={() => setSidebarOpen(true)}>
+        <IconButton theme={theme} className="lg:hidden shrink-0" onClick={() => setSidebarOpen(true)}>
           <Menu size={18} />
         </IconButton>
 
@@ -514,13 +576,13 @@ function TopBar({
         <div className="relative min-w-0">
           <button
             onClick={() => setAgentMenu(!agentMenu)}
-            className="
+            className={`
               flex items-center gap-2 sm:gap-3
               px-1 sm:px-2 py-1.5 rounded-xl
-              hover:bg-white/[0.04]
+              ${theme.surfaceHover}
               transition
               min-w-0
-            "
+            `}
           >
             <div
               className={`
@@ -536,15 +598,15 @@ function TopBar({
             </div>
 
             <div className="hidden xs:block sm:block text-left min-w-0">
-              <p className="text-sm font-semibold text-white truncate max-w-[140px] md:max-w-none">
+              <p className={`text-sm font-semibold ${theme.text} truncate max-w-[140px] md:max-w-none`}>
                 {current.name}
               </p>
-              <p className="text-[11px] text-zinc-600 hidden md:block truncate">
+              <p className={`text-[11px] ${theme.text600} hidden md:block truncate`}>
                 {current.description}
               </p>
             </div>
 
-            <ChevronDown size={16} className="text-zinc-600 ml-1 shrink-0" />
+            <ChevronDown size={16} className={`${theme.text600} ml-1 shrink-0`} />
           </button>
 
           {agentMenu && (
@@ -554,20 +616,20 @@ function TopBar({
                 className="fixed inset-0 z-40"
               />
               <div
-                className="
+                className={`
                   absolute top-12 sm:top-14 left-0
                   w-[280px] max-w-[88vw]
                   rounded-2xl
-                  border border-white/[0.08]
-                  bg-[#0b0b0b]/95
+                  border ${theme.borderStrong}
+                  ${theme.dropdownBg}
                   backdrop-blur-2xl
                   shadow-2xl
                   p-2
                   z-50
                   max-h-[70vh] overflow-y-auto
-                "
+                `}
               >
-                <div className="px-3 py-2 text-[10px] uppercase tracking-widest text-zinc-600">
+                <div className={`px-3 py-2 text-[10px] uppercase tracking-widest ${theme.text600}`}>
                   Select agent
                 </div>
 
@@ -581,7 +643,7 @@ function TopBar({
                         setActiveAgent(agent.id);
                         setAgentMenu(false);
                       }}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.05] text-left"
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl ${theme.surfaceHover2} text-left`}
                     >
                       <div
                         className={`
@@ -595,8 +657,8 @@ function TopBar({
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-zinc-200 truncate">{agent.name}</p>
-                        <p className="text-[11px] text-zinc-600 truncate">
+                        <p className={`text-sm ${theme.text200} truncate`}>{agent.name}</p>
+                        <p className={`text-[11px] ${theme.text600} truncate`}>
                           {agent.description}
                         </p>
                       </div>
@@ -616,22 +678,31 @@ function TopBar({
       {/* Right actions */}
       <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         <div className="hidden xl:flex items-center gap-1 mr-2">
-          <GlassButton active>
+          <GlassButton theme={theme} active>
             <Zap size={13} />
             Fast
           </GlassButton>
 
-          <GlassButton>
+          <GlassButton theme={theme}>
             <Brain size={13} />
             Reason
           </GlassButton>
         </div>
 
-        <IconButton title="Agent activity" onClick={() => setRightPanel(true)}>
+        <IconButton
+          theme={theme}
+          title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          onClick={onToggleTheme}
+        >
+          {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+        </IconButton>
+
+        <IconButton theme={theme} title="Agent activity" onClick={() => setRightPanel(true)}>
           <PanelRight size={17} />
         </IconButton>
 
         <IconButton
+          theme={theme}
           title="AI Controls"
           onClick={() => setAiControls(true)}
           className="hidden sm:flex"
@@ -644,10 +715,10 @@ function TopBar({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   AGENT ACTIVITY PANEL
+   AI CONTROLS PANEL
 ───────────────────────────────────────────────────────────── */
 
-function AIControlsPanel({ open, setOpen }) {
+function AIControlsPanel({ open, setOpen, theme }) {
   const [webEnabled, setWebEnabled] = useState(true);
   const [reasoningEnabled, setReasoningEnabled] = useState(false);
   const [autoAgents, setAutoAgents] = useState(true);
@@ -658,7 +729,7 @@ function AIControlsPanel({ open, setOpen }) {
     <button
       onClick={onClick}
       className={`w-10 h-6 rounded-full p-1 transition ${
-        enabled ? 'bg-red-500' : 'bg-white/[0.12]'
+        enabled ? 'bg-red-500' : theme.toggleOff
       }`}
     >
       <span
@@ -673,26 +744,26 @@ function AIControlsPanel({ open, setOpen }) {
     <>
       <div
         onClick={() => setOpen(false)}
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        className={`fixed inset-0 z-40 ${theme.backdrop} backdrop-blur-sm`}
       />
 
-      <aside className="fixed right-0 top-0 bottom-0 z-50 w-[88vw] max-w-[360px] bg-[#070707]/95 backdrop-blur-2xl border-l border-white/[0.06] shadow-[-20px_0_60px_-30px_rgba(244,63,94,0.45)]">
+      <aside className={`fixed right-0 top-0 bottom-0 z-50 w-[88vw] max-w-[360px] ${theme.panelBg} backdrop-blur-2xl border-l ${theme.border} shadow-[-20px_0_60px_-30px_rgba(244,63,94,0.45)]`}>
         <div className="h-full flex flex-col">
-          <div className="h-16 px-4 sm:px-5 flex items-center justify-between border-b border-white/[0.05]">
+          <div className={`h-16 px-4 sm:px-5 flex items-center justify-between border-b ${theme.borderSubtle}`}>
             <div>
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={15} className="text-red-400" />
-                <h3 className="text-sm font-semibold text-white">AI Controls</h3>
+                <h3 className={`text-sm font-semibold ${theme.text}`}>AI Controls</h3>
               </div>
-              <p className="text-[11px] text-zinc-600 mt-1">Customize how Nexus works</p>
+              <p className={`text-[11px] ${theme.text600} mt-1`}>Customize how Nexus works</p>
             </div>
-            <IconButton onClick={() => setOpen(false)}>
+            <IconButton theme={theme} onClick={() => setOpen(false)}>
               <X size={16} />
             </IconButton>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600 font-semibold mb-2">
+            <p className={`text-[10px] uppercase tracking-[0.18em] ${theme.text600} font-semibold mb-2`}>
               Response mode
             </p>
 
@@ -702,7 +773,7 @@ function AIControlsPanel({ open, setOpen }) {
                   <Zap size={14} className="text-red-400" />
                   <span className="text-xs font-medium text-red-300">Fast</span>
                 </div>
-                <p className="text-[10px] text-zinc-600 mt-1">Quick responses</p>
+                <p className={`text-[10px] ${theme.text600} mt-1`}>Quick responses</p>
               </button>
 
               <button
@@ -710,53 +781,53 @@ function AIControlsPanel({ open, setOpen }) {
                 className={`p-3 rounded-xl border text-left transition ${
                   reasoningEnabled
                     ? 'border-pink-500/25 bg-pink-500/10'
-                    : 'border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.05]'
+                    : `${theme.border} ${theme.surface2} ${theme.surfaceHover2}`
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Brain size={14} className={reasoningEnabled ? 'text-pink-400' : 'text-zinc-500'} />
-                  <span className={`text-xs font-medium ${reasoningEnabled ? 'text-pink-300' : 'text-zinc-300'}`}>
+                  <Brain size={14} className={reasoningEnabled ? 'text-pink-400' : theme.text500} />
+                  <span className={`text-xs font-medium ${reasoningEnabled ? 'text-pink-300' : theme.text300}`}>
                     Reason
                   </span>
                 </div>
-                <p className="text-[10px] text-zinc-600 mt-1">Deeper analysis</p>
+                <p className={`text-[10px] ${theme.text600} mt-1`}>Deeper analysis</p>
               </button>
             </div>
 
-            <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600 font-semibold mb-2">
+            <p className={`text-[10px] uppercase tracking-[0.18em] ${theme.text600} font-semibold mb-2`}>
               Capabilities
             </p>
 
             <div className="space-y-2.5">
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+              <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${theme.border} ${theme.surface2}`}>
                 <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/10 flex items-center justify-center">
                   <Globe size={15} className="text-red-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-zinc-200">Web search</p>
-                  <p className="text-[11px] text-zinc-600 mt-1">Use live web information</p>
+                  <p className={`text-sm ${theme.text200}`}>Web search</p>
+                  <p className={`text-[11px] ${theme.text600} mt-1`}>Use live web information</p>
                 </div>
                 <Toggle enabled={webEnabled} onClick={() => setWebEnabled(!webEnabled)} />
               </div>
 
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+              <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${theme.border} ${theme.surface2}`}>
                 <div className="w-9 h-9 rounded-xl bg-pink-500/10 border border-pink-500/10 flex items-center justify-center">
                   <Brain size={15} className="text-pink-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-zinc-200">Deep reasoning</p>
-                  <p className="text-[11px] text-zinc-600 mt-1">Spend more time solving complex tasks</p>
+                  <p className={`text-sm ${theme.text200}`}>Deep reasoning</p>
+                  <p className={`text-[11px] ${theme.text600} mt-1`}>Spend more time solving complex tasks</p>
                 </div>
                 <Toggle enabled={reasoningEnabled} onClick={() => setReasoningEnabled(!reasoningEnabled)} />
               </div>
 
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+              <div className={`flex items-center gap-3 p-3.5 rounded-2xl border ${theme.border} ${theme.surface2}`}>
                 <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/10 flex items-center justify-center">
                   <Sparkles size={15} className="text-rose-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-zinc-200">Auto-select agents</p>
-                  <p className="text-[11px] text-zinc-600 mt-1">Let Nexus choose the right specialists</p>
+                  <p className={`text-sm ${theme.text200}`}>Auto-select agents</p>
+                  <p className={`text-[11px] ${theme.text600} mt-1`}>Let Nexus choose the right specialists</p>
                 </div>
                 <Toggle enabled={autoAgents} onClick={() => setAutoAgents(!autoAgents)} />
               </div>
@@ -766,8 +837,8 @@ function AIControlsPanel({ open, setOpen }) {
               <div className="flex gap-3">
                 <Sparkles size={15} className="text-red-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-medium text-zinc-300">Nexus orchestration</p>
-                  <p className="text-[11px] leading-5 text-zinc-600 mt-1">
+                  <p className={`text-xs font-medium ${theme.text300}`}>Nexus orchestration</p>
+                  <p className={`text-[11px] leading-5 ${theme.text600} mt-1`}>
                     Nexus can combine Research, Coding, Reasoning, Web and PDF agents automatically based on your request.
                   </p>
                 </div>
@@ -780,7 +851,7 @@ function AIControlsPanel({ open, setOpen }) {
   );
 }
 
-function AgentPanel({ open, setOpen }) {
+function AgentPanel({ open, setOpen, theme }) {
   if (!open) return null;
 
   return (
@@ -788,28 +859,28 @@ function AgentPanel({ open, setOpen }) {
       {/* Backdrop (mobile & tablet only) */}
       <div
         onClick={() => setOpen(false)}
-        className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+        className={`fixed inset-0 z-30 ${theme.backdrop} backdrop-blur-sm lg:hidden`}
       />
 
       <aside
-        className="
+        className={`
           fixed lg:absolute
           right-0 top-0 lg:top-[72px]
           bottom-0 z-40
           w-[86vw] max-w-[330px] sm:w-[330px]
-          bg-[#070707]/95 backdrop-blur-2xl
-          border-l border-white/[0.06]
+          ${theme.panelBg} backdrop-blur-2xl
+          border-l ${theme.border}
           shadow-[-20px_0_50px_-30px_rgba(244,63,94,0.4)]
-        "
+        `}
       >
         <div className="h-full flex flex-col">
-          <div className="h-16 px-4 sm:px-5 flex items-center justify-between border-b border-white/[0.05]">
+          <div className={`h-16 px-4 sm:px-5 flex items-center justify-between border-b ${theme.borderSubtle}`}>
             <div>
-              <h3 className="text-sm font-semibold text-white">Agent activity</h3>
-              <p className="text-[11px] text-zinc-600">Live orchestration</p>
+              <h3 className={`text-sm font-semibold ${theme.text}`}>Agent activity</h3>
+              <p className={`text-[11px] ${theme.text600}`}>Live orchestration</p>
             </div>
 
-            <IconButton onClick={() => setOpen(false)}>
+            <IconButton theme={theme} onClick={() => setOpen(false)}>
               <X size={16} />
             </IconButton>
           </div>
@@ -859,7 +930,7 @@ function AgentPanel({ open, setOpen }) {
                             ? 'bg-red-500/10 border-red-500/20 text-red-400'
                             : item.status === 'Working'
                               ? 'bg-pink-500/10 border-pink-500/20 text-pink-400'
-                              : 'bg-white/[0.03] border-white/[0.06] text-zinc-600'
+                              : `${theme.surface} ${theme.border} ${theme.text600}`
                         }
                       `}
                     >
@@ -868,14 +939,14 @@ function AgentPanel({ open, setOpen }) {
 
                     <div className="pt-0.5 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm text-zinc-200">{item.name}</p>
+                        <p className={`text-sm ${theme.text200}`}>{item.name}</p>
 
                         {item.status === 'Working' && (
                           <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />
                         )}
                       </div>
 
-                      <p className="text-xs text-zinc-600 mt-1">{item.text}</p>
+                      <p className={`text-xs ${theme.text600} mt-1`}>{item.text}</p>
 
                       <span
                         className={`
@@ -885,7 +956,7 @@ function AgentPanel({ open, setOpen }) {
                               ? 'text-red-400'
                               : item.status === 'Working'
                                 ? 'text-pink-400'
-                                : 'text-zinc-700'
+                                : theme.text700
                           }
                         `}
                       >
@@ -899,14 +970,14 @@ function AgentPanel({ open, setOpen }) {
 
             {/* Stats */}
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <div className="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
-                <p className="text-[10px] text-zinc-600">Agents used</p>
-                <p className="text-lg font-semibold text-white mt-1">3</p>
+              <div className={`rounded-xl border ${theme.borderSubtle} ${theme.surface2} p-3`}>
+                <p className={`text-[10px] ${theme.text600}`}>Agents used</p>
+                <p className={`text-lg font-semibold ${theme.text} mt-1`}>3</p>
               </div>
 
-              <div className="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
-                <p className="text-[10px] text-zinc-600">Time</p>
-                <p className="text-lg font-semibold text-white mt-1">2.4s</p>
+              <div className={`rounded-xl border ${theme.borderSubtle} ${theme.surface2} p-3`}>
+                <p className={`text-[10px] ${theme.text600}`}>Time</p>
+                <p className={`text-lg font-semibold ${theme.text} mt-1`}>2.4s</p>
               </div>
             </div>
           </div>
@@ -920,7 +991,7 @@ function AgentPanel({ open, setOpen }) {
    EMPTY STATE
 ───────────────────────────────────────────────────────────── */
 
-function EmptyState({ onSend }) {
+function EmptyState({ onSend, theme }) {
   const suggestions = [
     {
       icon: Search,
@@ -971,17 +1042,17 @@ function EmptyState({ onSend }) {
           <div className="absolute inset-0 rounded-[28px] bg-red-500/20 blur-3xl" />
 
           <div
-            className="
+            className={`
               relative w-[68px] h-[68px] sm:w-[88px] sm:h-[88px] rounded-[22px] sm:rounded-[28px]
-              bg-gradient-to-br from-zinc-950 via-black to-red-950/70
+              bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/70' : 'from-zinc-100 via-white to-red-100'}
               border border-red-500/30
               flex items-center justify-center
               shadow-[0_0_65px_-12px_rgba(244,63,94,0.9)]
               ring-1 ring-pink-500/10
-            "
+            `}
           >
             <div className="absolute inset-2 rounded-[16px] sm:rounded-[22px] bg-gradient-to-br from-red-600/20 to-pink-600/10" />
-            
+
             <NexusLogo size={50} className="relative z-10 text-white hidden sm:block" />
           </div>
         </div>
@@ -989,18 +1060,18 @@ function EmptyState({ onSend }) {
 
       {/* Nexus branding */}
       <div className="flex justify-center items-center gap-2 mb-3">
-        <span className="text-sm font-semibold tracking-wide text-zinc-300">
+        <span className={`text-sm font-semibold tracking-wide ${theme.text300}`}>
           Nexus<span className="text-red-500">AI</span>
         </span>
         <span className="w-1 h-1 rounded-full bg-red-500/70" />
-        <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">
+        <span className={`text-[10px] uppercase tracking-[0.2em] ${theme.text600}`}>
           AI Workspace
         </span>
       </div>
 
       {/* Heading */}
       <div className="text-center mb-7 sm:mb-9 px-2">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight">
+        <h1 className={`text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight ${theme.text} leading-tight`}>
           What can{' '}
           <span className="bg-gradient-to-r from-red-500 via-pink-500 to-rose-400 bg-clip-text text-transparent">
             Nexus
@@ -1008,7 +1079,7 @@ function EmptyState({ onSend }) {
           help you with?
         </h1>
 
-        <p className="mt-3 text-sm md:text-base text-zinc-500">
+        <p className={`mt-3 text-sm md:text-base ${theme.text500}`}>
           Your AI team is ready to research, reason, code, browse and analyze.
         </p>
       </div>
@@ -1022,14 +1093,14 @@ function EmptyState({ onSend }) {
             <button
               key={item.title}
               onClick={() => useSuggestion(item.title)}
-              className="
+              className={`
                 group text-left p-3 sm:p-4 rounded-2xl
-                border border-white/[0.06]
-                bg-white/[0.025]
-                hover:bg-white/[0.045]
+                border ${theme.border}
+                ${theme.surface2}
+                ${theme.surfaceHover3}
                 hover:border-red-500/20
                 transition-all duration-300
-              "
+              `}
             >
               <div
                 className="
@@ -1044,9 +1115,9 @@ function EmptyState({ onSend }) {
                 <Icon size={17} className="hidden sm:block" />
               </div>
 
-              <p className="text-sm font-medium text-zinc-200">{item.title}</p>
+              <p className={`text-sm font-medium ${theme.text200}`}>{item.title}</p>
 
-              <p className="text-[11px] leading-4 text-zinc-600 mt-1 hidden sm:block">
+              <p className={`text-[11px] leading-4 ${theme.text600} mt-1 hidden sm:block`}>
                 {item.description}
               </p>
             </button>
@@ -1056,13 +1127,13 @@ function EmptyState({ onSend }) {
 
       {/* Main prompt */}
       <div
-        className="
-          rounded-2xl border border-white/[0.08]
-          bg-[#090909]
+        className={`
+          rounded-2xl border ${theme.borderStrong}
+          ${theme.promptBg}
           shadow-[0_25px_80px_-35px_rgba(244,63,94,0.35)]
           focus-within:border-red-500/30
           transition-all duration-300
-        "
+        `}
       >
         <textarea
           rows={3}
@@ -1075,44 +1146,44 @@ function EmptyState({ onSend }) {
               submit();
             }
           }}
-          className="
+          className={`
             w-full resize-none bg-transparent outline-none
-            px-4 sm:px-5 pt-4 sm:pt-5 text-sm text-zinc-200
-            placeholder:text-zinc-600
-          "
+            px-4 sm:px-5 pt-4 sm:pt-5 text-sm ${theme.text200}
+            ${theme.placeholder}
+          `}
         />
 
         <div className="flex items-center justify-between px-2.5 sm:px-3 pb-2.5 sm:pb-3 pt-3 gap-2">
           <div className="flex items-center gap-1 min-w-0 overflow-x-auto">
             <button
-              className="
+              className={`
                 shrink-0
                 w-8 h-8 rounded-lg flex items-center justify-center
-                text-zinc-600 hover:text-zinc-300 hover:bg-white/[0.05] transition
-              "
+                ${theme.text600} hover:${theme.text300} ${theme.surfaceHover2} transition
+              `}
             >
               <Paperclip size={16} />
             </button>
 
             <button
-              className="
+              className={`
                 shrink-0
                 flex items-center gap-1.5 px-2.5 h-8 rounded-lg
-                text-[11px] text-zinc-600
-                hover:text-zinc-300 hover:bg-white/[0.05] transition
-              "
+                text-[11px] ${theme.text600}
+                hover:${theme.text300} ${theme.surfaceHover2} transition
+              `}
             >
               <Globe size={13} />
               Web
             </button>
 
             <button
-              className="
+              className={`
                 shrink-0
                 hidden xs:flex sm:flex items-center gap-1.5 px-2.5 h-8 rounded-lg
-                text-[11px] text-zinc-600
-                hover:text-zinc-300 hover:bg-white/[0.05] transition
-              "
+                text-[11px] ${theme.text600}
+                hover:${theme.text300} ${theme.surfaceHover2} transition
+              `}
             >
               <Brain size={13} />
               Reason
@@ -1139,7 +1210,7 @@ function EmptyState({ onSend }) {
 
       <div className="flex items-center justify-center gap-2 mt-4 px-2 text-center">
         <Sparkles size={11} className="text-red-500/50 shrink-0" />
-        <span className="text-[10px] text-zinc-700">
+        <span className={`text-[10px] ${theme.text700}`}>
           Nexus automatically selects the right agents for your task
         </span>
       </div>
@@ -1151,7 +1222,7 @@ function EmptyState({ onSend }) {
    CHAT INPUT
 ───────────────────────────────────────────────────────────── */
 
-function ChatInput({ onSend }) {
+function ChatInput({ onSend, theme }) {
   const [message, setMessage] = useState('');
   const [webEnabled, setWebEnabled] = useState(false);
   const [reasoningEnabled, setReasoningEnabled] = useState(false);
@@ -1195,15 +1266,15 @@ function ChatInput({ onSend }) {
     <div className="px-3 sm:px-4 md:px-6 pb-4 sm:pb-5 pt-2">
       <div className="max-w-4xl mx-auto">
         <div
-          className="
+          className={`
             relative rounded-2xl
-            border border-white/[0.08]
-            bg-[#0a0a0a]
+            border ${theme.borderStrong}
+            ${theme.inputBg}
             shadow-[0_20px_60px_-25px_rgba(0,0,0,0.9)]
             focus-within:border-red-500/30
             focus-within:shadow-[0_20px_70px_-25px_rgba(220,38,38,0.18)]
             transition-all
-          "
+          `}
         >
           <textarea
             ref={textareaRef}
@@ -1212,18 +1283,19 @@ function ChatInput({ onSend }) {
             onKeyDown={handleKeyDown}
             rows={1}
             placeholder="Ask Nexus anything..."
-            className="
+            className={`
               w-full resize-none bg-transparent outline-none
-              text-sm text-zinc-200
-              placeholder:text-zinc-600
+              text-sm ${theme.text200}
+              ${theme.placeholder}
               px-4 sm:px-5 pt-4 sm:pt-5 pb-14
               max-h-[180px]
-            "
+            `}
           />
 
           <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1">
             <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 overflow-x-auto">
               <IconButton
+                theme={theme}
                 title="Attach file"
                 className="w-8 h-8 border-transparent bg-transparent shrink-0"
               >
@@ -1231,6 +1303,7 @@ function ChatInput({ onSend }) {
               </IconButton>
 
               <IconButton
+                theme={theme}
                 title="Upload image"
                 className="w-8 h-8 border-transparent bg-transparent hidden sm:flex shrink-0"
               >
@@ -1246,7 +1319,7 @@ function ChatInput({ onSend }) {
                   ${
                     webEnabled
                       ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                      : 'text-zinc-600 border-transparent hover:text-zinc-300'
+                      : `${theme.text600} border-transparent hover:${theme.text300}`
                   }
                 `}
               >
@@ -1263,7 +1336,7 @@ function ChatInput({ onSend }) {
                   ${
                     reasoningEnabled
                       ? 'bg-pink-500/10 text-pink-400 border-pink-500/20'
-                      : 'text-zinc-600 border-transparent hover:text-zinc-300'
+                      : `${theme.text600} border-transparent hover:${theme.text300}`
                   }
                 `}
               >
@@ -1274,6 +1347,7 @@ function ChatInput({ onSend }) {
 
             <div className="flex items-center gap-1 shrink-0">
               <IconButton
+                theme={theme}
                 title="Voice input"
                 className="w-8 h-8 border-transparent bg-transparent hidden sm:flex"
               >
@@ -1299,8 +1373,8 @@ function ChatInput({ onSend }) {
         </div>
 
         <div className="flex items-center justify-center gap-2 mt-3 px-2 text-center">
-          <Sparkles size={11} className="text-zinc-700 shrink-0" />
-          <p className="text-[10px] text-zinc-700">
+          <Sparkles size={11} className={theme.text700} />
+          <p className={`text-[10px] ${theme.text700}`}>
             Nexus can make mistakes. Verify important information.
           </p>
         </div>
@@ -1313,7 +1387,7 @@ function ChatInput({ onSend }) {
    CHAT MESSAGES
 ───────────────────────────────────────────────────────────── */
 
-function ChatMessages({ messages, isTyping }) {
+function ChatMessages({ messages, isTyping, theme }) {
   return (
     <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8">
       <div className="space-y-6 sm:space-y-7">
@@ -1334,7 +1408,7 @@ function ChatMessages({ messages, isTyping }) {
                     {message.content}
                   </div>
 
-                  <p className="text-[10px] text-zinc-700 text-right mt-2">
+                  <p className={`text-[10px] ${theme.text700} text-right mt-2`}>
                     You
                   </p>
                 </div>
@@ -1358,7 +1432,7 @@ function ChatMessages({ messages, isTyping }) {
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-zinc-200">
+                  <span className={`text-sm font-semibold ${theme.text200}`}>
                     Nexus AI
                   </span>
 
@@ -1367,7 +1441,7 @@ function ChatMessages({ messages, isTyping }) {
                   </span>
                 </div>
 
-                <div className="text-sm leading-6 sm:leading-7 text-zinc-400 whitespace-pre-wrap break-words">
+                <div className={`text-sm leading-6 sm:leading-7 ${theme.text400} whitespace-pre-wrap break-words`}>
                   {message.content}
                 </div>
 
@@ -1376,13 +1450,13 @@ function ChatMessages({ messages, isTyping }) {
                     {message.agents.map((agent) => (
                       <span
                         key={agent}
-                        className="
+                        className={`
                           inline-flex items-center gap-1.5
                           px-2.5 py-1 rounded-lg
-                          bg-white/[0.03]
-                          border border-white/[0.06]
-                          text-[10px] text-zinc-500
-                        "
+                          ${theme.surface}
+                          border ${theme.border}
+                          text-[10px] ${theme.text500}
+                        `}
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                         {agent}
@@ -1393,21 +1467,21 @@ function ChatMessages({ messages, isTyping }) {
 
                 <div className="flex items-center gap-1 mt-4">
                   <button
-                    className="p-2 rounded-lg text-zinc-700 hover:text-zinc-300 hover:bg-white/[0.04] transition"
+                    className={`p-2 rounded-lg ${theme.text700} hover:${theme.text300} ${theme.surfaceHover} transition`}
                     title="Copy"
                   >
                     <Copy size={14} />
                   </button>
 
                   <button
-                    className="p-2 rounded-lg text-zinc-700 hover:text-zinc-300 hover:bg-white/[0.04] transition"
+                    className={`p-2 rounded-lg ${theme.text700} hover:${theme.text300} ${theme.surfaceHover} transition`}
                     title="Good response"
                   >
                     <ThumbsUp size={14} />
                   </button>
 
                   <button
-                    className="p-2 rounded-lg text-zinc-700 hover:text-zinc-300 hover:bg-white/[0.04] transition"
+                    className={`p-2 rounded-lg ${theme.text700} hover:${theme.text300} ${theme.surfaceHover} transition`}
                     title="Bad response"
                   >
                     <ThumbsDown size={14} />
@@ -1431,16 +1505,16 @@ function ChatMessages({ messages, isTyping }) {
               <NexusLogo size={20} />
             </div>
             <div>
-              <div className="text-sm font-semibold text-zinc-200 mb-3">
+              <div className={`text-sm font-semibold ${theme.text200} mb-3`}>
                 Nexus AI
               </div>
 
               <div
-                className="
+                className={`
                   flex items-center gap-1.5 px-4 py-3
-                  rounded-2xl bg-white/[0.03]
-                  border border-white/[0.06]
-                "
+                  rounded-2xl ${theme.surface}
+                  border ${theme.border}
+                `}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" />
                 <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce [animation-delay:150ms]" />
@@ -1459,6 +1533,11 @@ function ChatMessages({ messages, isTyping }) {
 ───────────────────────────────────────────────────────────── */
 
 export default function NexusChatPage() {
+  const dispatch = useDispatch();
+  const darkMode = useSelector((state) => state.toggle.darkMode);
+  const theme = getTheme(darkMode);
+  const handleToggleTheme = () => dispatch(toggleDarkMode());
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightPanel, setRightPanel] = useState(false);
@@ -1561,11 +1640,11 @@ export default function NexusChatPage() {
 
   return (
     <div
-      className="
-        h-screen overflow-hidden bg-black text-white
+      className={`
+        h-screen overflow-hidden ${theme.pageBg} ${theme.pageText}
         selection:bg-red-500/30 selection:text-red-200
         flex
-      "
+      `}
     >
       {/* Background glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -1587,13 +1666,7 @@ export default function NexusChatPage() {
           "
         />
 
-        <div
-          className="
-            absolute inset-0 opacity-[0.018]
-            bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)]
-            bg-[size:60px_60px]
-          "
-        />
+        <div className={`absolute inset-0 ${theme.gridLine} bg-[size:60px_60px]`} />
       </div>
 
       {/* Sidebar */}
@@ -1613,6 +1686,7 @@ export default function NexusChatPage() {
           activeConversation={activeConversation}
           setActiveConversation={setActiveConversation}
           setSidebarOpen={setSidebarOpen}
+          theme={theme}
           setHasStartedChat={(value) => {
             setHasStartedChat(value);
 
@@ -1630,11 +1704,11 @@ export default function NexusChatPage() {
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          className="
+          className={`
             fixed inset-0 z-40
-            bg-black/70 backdrop-blur-sm
+            ${theme.backdrop} backdrop-blur-sm
             lg:hidden
-          "
+          `}
         />
       )}
 
@@ -1646,6 +1720,9 @@ export default function NexusChatPage() {
           setSidebarOpen={setSidebarOpen}
           setRightPanel={setRightPanel}
           setAiControls={setAiControls}
+          theme={theme}
+          darkMode={darkMode}
+          onToggleTheme={handleToggleTheme}
         />
 
         <div className="relative flex-1 min-h-0">
@@ -1659,22 +1736,22 @@ export default function NexusChatPage() {
           >
             {!hasStartedChat ? (
               <div className="h-full flex items-center justify-center px-4 sm:px-5 py-6 sm:py-8 md:py-10">
-                <EmptyState onSend={handleSendMessage} />
+                <EmptyState onSend={handleSendMessage} theme={theme} />
               </div>
             ) : (
               <>
-                <ChatMessages messages={messages} isTyping={isTyping} />
+                <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
 
                 <div ref={chatEndRef} />
               </>
             )}
           </div>
 
-          <AgentPanel open={rightPanel} setOpen={setRightPanel} />
-          <AIControlsPanel open={aiControls} setOpen={setAiControls} />
+          <AgentPanel open={rightPanel} setOpen={setRightPanel} theme={theme} />
+          <AIControlsPanel open={aiControls} setOpen={setAiControls} theme={theme} />
         </div>
 
-        {hasStartedChat && <ChatInput onSend={handleSendMessage} />}
+        {hasStartedChat && <ChatInput onSend={handleSendMessage} theme={theme} />}
       </main>
     </div>
   );
