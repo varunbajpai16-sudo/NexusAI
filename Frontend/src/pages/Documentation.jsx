@@ -142,7 +142,7 @@ function CodeBlock({ children, language = "javascript", theme }) {
   };
 
   return (
-    <div className={`my-6 overflow-hidden rounded-2xl border ${theme.borderSoft} ${theme.codeBlockBg}`}>
+    <div className={`my-7 overflow-hidden rounded-2xl border ${theme.borderSoft} ${theme.codeBlockBg} shadow-[0_18px_55px_-35px_rgba(0,0,0,0.85)]`}>
       <div className={`flex items-center justify-between px-4 py-3 border-b ${theme.border} ${theme.codeBlockHeaderBg}`}>
         <div className="flex items-center gap-2">
           <Terminal size={13} className="text-red-400" />
@@ -268,7 +268,7 @@ function Sidebar({ active, setActive, mobileOpen, setMobileOpen, theme }) {
                         transition-all
                         ${
                           isActive
-                            ? "bg-red-500/10 text-red-400 border border-red-500/15"
+                            ? "bg-red-500/[0.08] text-red-400 border border-red-500/20 shadow-[0_8px_25px_-18px_rgba(244,63,94,0.8)]"
                             : `${theme.text500} border border-transparent hover:${theme.text200} ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
                         }
                       `}
@@ -308,7 +308,7 @@ function Sidebar({ active, setActive, mobileOpen, setMobileOpen, theme }) {
 
 function DocHeader({ eyebrow, title, description, theme }) {
   return (
-    <header className="mb-12">
+    <header className="mb-14 md:mb-16">
       <div
         className="
           inline-flex items-center gap-2
@@ -328,7 +328,7 @@ function DocHeader({ eyebrow, title, description, theme }) {
         {eyebrow}
       </div>
 
-      <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${theme.text}`}>
+      <h1 className={`text-4xl md:text-5xl lg:text-[3.25rem] font-bold tracking-[-0.035em] leading-[1.08] ${theme.text}`}>
         {title}
       </h1>
 
@@ -896,7 +896,7 @@ export default function Documentation() {
   const [section, page] = docs[active];
 
   return (
-    <div className={`min-h-screen ${theme.pageBg} ${theme.pageText}`}>
+    <div className={`nexus-docs min-h-screen ${theme.pageBg} ${theme.pageText}`}>
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div
@@ -933,6 +933,7 @@ export default function Documentation() {
           ${theme.headerBg}
           backdrop-blur-2xl
           border-b ${theme.border}
+          shadow-[0_1px_0_rgba(255,255,255,0.02),0_12px_40px_-28px_rgba(244,63,94,0.35)]
         `}
       >
         <div className="h-full px-5 flex items-center justify-between">
@@ -1054,8 +1055,9 @@ export default function Documentation() {
         )}
 
         {/* Main documentation content */}
-        <main className="flex-1 min-w-0 px-5 md:px-10 lg:px-16 py-12 md:py-16">
-          <div className="max-w-4xl mx-auto">
+        <main className="relative flex-1 min-w-0 px-4 sm:px-6 md:px-10 lg:px-16 py-10 md:py-14 lg:py-16">
+          <div className="pointer-events-none absolute left-1/2 top-0 h-px w-[min(680px,70%)] -translate-x-1/2 bg-gradient-to-r from-transparent via-red-500/25 to-transparent" />
+          <div className="max-w-4xl mx-auto docs-reading-column">
             <div className={`flex items-center gap-2 text-[11px] ${theme.text700} mb-8`}>
               <span>Docs</span>
               <ChevronRight size={12} />
@@ -1147,6 +1149,61 @@ export default function Documentation() {
 
       {/* Scoped scrollbar CSS */}
       <style>{`
+        .nexus-docs {
+          --nexus-accent: rgba(244, 63, 94, 0.45);
+        }
+
+        .nexus-docs ::selection {
+          background: rgba(244, 63, 94, 0.22);
+          color: inherit;
+        }
+
+        .nexus-docs button,
+        .nexus-docs a,
+        .nexus-docs input {
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .nexus-docs button:focus-visible,
+        .nexus-docs a:focus-visible,
+        .nexus-docs input:focus-visible {
+          outline: 2px solid rgba(244, 63, 94, 0.38);
+          outline-offset: 2px;
+        }
+
+        .docs-reading-column {
+          position: relative;
+        }
+
+        .docs-reading-column > section {
+          scroll-margin-top: 105px;
+        }
+
+        .nexus-docs pre {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(244, 63, 94, 0.22) transparent;
+        }
+
+        .nexus-docs pre::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        .nexus-docs pre::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .nexus-docs pre::-webkit-scrollbar-thumb {
+          background: rgba(244, 63, 94, 0.20);
+          border-radius: 999px;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+          .nexus-docs button,
+          .nexus-docs a {
+            transition-timing-function: cubic-bezier(.22,1,.36,1);
+          }
+        }
+
         .docs-sidebar-scroll {
           scrollbar-width: thin;
           scrollbar-color: ${theme.scrollbarThumb} transparent;
