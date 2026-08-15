@@ -103,14 +103,6 @@ const Login = () => {
         {darkMode ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-      {/* Back Home */}
-      <button
-        onClick={() => navigate("/")}
-        className={`absolute top-6 left-6 z-20 flex items-center gap-2 text-sm ${theme.text500} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} transition`}
-      >
-        <ArrowRight className="rotate-180" size={16} />
-        Back to home
-      </button>
 
       {/* Main */}
       <div className="relative z-10 w-full max-w-md">
