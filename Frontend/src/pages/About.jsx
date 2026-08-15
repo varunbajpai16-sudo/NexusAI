@@ -97,7 +97,7 @@ const navLinks = [
 ];
 
 export default function NexusAbout() {
-  const navigete = useNavigate()
+  const navigete = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const dispatch = useDispatch();
@@ -106,17 +106,25 @@ export default function NexusAbout() {
   const handleToggleTheme = () => dispatch(toggleDarkMode());
 
   return (
-    <div className={`min-h-screen ${theme.pageBg} ${theme.pageText} overflow-x-hidden selection:bg-red-500/30 selection:text-red-200`}>
+    <div
+      className={`min-h-screen ${theme.pageBg} ${theme.pageText} overflow-x-hidden selection:bg-red-500/30 selection:text-red-200`}
+    >
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-300px] left-[30%] w-[700px] h-[520px] rounded-full bg-red-600/[0.04] blur-[150px]" />
         <div className="absolute bottom-[-250px] right-[5%] w-[600px] h-[500px] rounded-full bg-pink-600/[0.025] blur-[150px]" />
-        <div className={`absolute inset-0 ${theme.gridLine} bg-[size:64px_64px]`} />
+        <div
+          className={`absolute inset-0 ${theme.gridLine} bg-[size:64px_64px]`}
+        />
       </div>
 
-      <nav className={`relative z-30 h-[64px] md:h-[72px] border-b ${theme.border} ${theme.navBg} backdrop-blur-xl`}>
+      <nav
+        className={`relative z-30 h-[64px] md:h-[72px] border-b ${theme.border} ${theme.navBg} backdrop-blur-xl`}
+      >
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-5 md:px-8 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className={`shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/60' : 'from-zinc-100 via-white to-red-100'} border border-red-500/25 flex items-center justify-center shadow-[0_0_25px_-7px_rgba(244,63,94,0.7)]`}>
+            <div
+              className={`shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/60' : 'from-zinc-100 via-white to-red-100'} border border-red-500/25 flex items-center justify-center shadow-[0_0_25px_-7px_rgba(244,63,94,0.7)]`}
+            >
               <NexusLogo size={27} />
             </div>
             <span className="text-base sm:text-lg font-bold tracking-tight truncate">
@@ -124,16 +132,27 @@ export default function NexusAbout() {
             </span>
           </a>
 
-          <div className={`hidden md:flex items-center gap-7 text-sm font-medium ${theme.text500}`}>
-            <button onClick={()=>navigete("/")} className={`${theme.hoverText} transition`}>
+          <div
+            className={`hidden md:flex items-center gap-7 text-sm font-medium ${theme.text500}`}
+          >
+            <button
+              onClick={() => navigete('/')}
+              className={`${theme.hoverText} transition`}
+            >
               Home
             </button>
-            <a href="/agents" className={`${theme.hoverText} transition`}>
+            <button
+              onClick={() => navigete('/agents')}
+              className={`${theme.hoverText} transition`}
+            >
               Agents
-            </a>
-            <a href="/about" className={theme.text}>
+            </button>
+            <button
+              onClick={() => navigete('/about')}
+              className={`${theme.hoverText} transition`}
+            >
               About
-            </a>
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -145,12 +164,12 @@ export default function NexusAbout() {
               {darkMode ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
-            <a
-              href="/chat"
+            <button
+              onClick={()=>navigete("/chat")}
               className="hidden xs:flex sm:flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-xs font-semibold shadow-[0_0_25px_-10px_rgba(244,63,94,0.8)] hover:scale-[1.02] transition"
             >
               Try Nexus <ArrowRight size={13} />
-            </a>
+            </button>
 
             <button
               onClick={() => setMenuOpen((v) => !v)}
@@ -164,7 +183,9 @@ export default function NexusAbout() {
 
         {/* Mobile menu panel */}
         {menuOpen && (
-          <div className={`md:hidden absolute top-full left-0 right-0 border-b ${theme.border} ${theme.mobileMenuBg} backdrop-blur-xl px-4 sm:px-5 py-3`}>
+          <div
+            className={`md:hidden absolute top-full left-0 right-0 border-b ${theme.border} ${theme.mobileMenuBg} backdrop-blur-xl px-4 sm:px-5 py-3`}
+          >
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
                 <a
@@ -197,8 +218,10 @@ export default function NexusAbout() {
           <div className="flex justify-center mb-6 sm:mb-7">
             <div className="relative">
               <div className="absolute inset-[-30px] rounded-full bg-red-500/10 blur-3xl" />
-              <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-[24px] sm:rounded-[30px] bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-[#090909] to-red-950/70' : 'from-zinc-100 via-white to-red-100'} border border-red-500/30 flex items-center justify-center shadow-[0_0_70px_-15px_rgba(244,63,94,0.8)]`}>
-                 <div className="absolute inset-2.5 rounded-[23px] bg-gradient-to-br from-red-600/15 to-pink-600/10" />
+              <div
+                className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-[24px] sm:rounded-[30px] bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-[#090909] to-red-950/70' : 'from-zinc-100 via-white to-red-100'} border border-red-500/30 flex items-center justify-center shadow-[0_0_70px_-15px_rgba(244,63,94,0.8)]`}
+              >
+                <div className="absolute inset-2.5 rounded-[23px] bg-gradient-to-br from-red-600/15 to-pink-600/10" />
                 <NexusLogo size={52} className="relative z-10 text-white" />
               </div>
             </div>
@@ -206,7 +229,9 @@ export default function NexusAbout() {
 
           <div className="flex items-center justify-center gap-2 mb-4 sm:mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-            <span className={`text-[10px] uppercase tracking-[0.28em] ${theme.text600}`}>
+            <span
+              className={`text-[10px] uppercase tracking-[0.28em] ${theme.text600}`}
+            >
               About NexusAI
             </span>
           </div>
@@ -218,7 +243,9 @@ export default function NexusAbout() {
             </span>
           </h1>
 
-          <p className={`max-w-2xl mx-auto mt-5 sm:mt-6 text-sm md:text-base leading-6 sm:leading-7 ${theme.text500} px-2`}>
+          <p
+            className={`max-w-2xl mx-auto mt-5 sm:mt-6 text-sm md:text-base leading-6 sm:leading-7 ${theme.text500} px-2`}
+          >
             Nexus is a multi-agent AI workspace built to turn a single request
             into coordinated intelligence. Instead of asking one model to do
             everything, Nexus brings specialized agents together around your
@@ -226,24 +253,26 @@ export default function NexusAbout() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8 sm:mt-9 px-2">
-            <a
-              href="/chat"
+            <button
+              onClick={() => navigete('/chat')}
               className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-sm font-semibold shadow-[0_0_35px_-12px_rgba(244,63,94,0.8)] hover:scale-[1.02] transition"
             >
               Start with Nexus <ArrowRight size={15} />
-            </a>
-            <a
-              href="/agents"
+            </button>
+            <button
+              onClick={() => navigete('/agents')}
               className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl border ${theme.borderSoft} ${theme.chipBg} text-sm ${theme.text400} ${theme.hoverText} ${theme.hoverBg5} transition`}
             >
               Explore agents <Layers3 size={15} />
-            </a>
+            </button>
           </div>
         </section>
 
         <section className="max-w-7xl mx-auto px-4 sm:px-5 md:px-8 pb-16 sm:pb-24">
           <div className="grid lg:grid-cols-[1fr_1.25fr] gap-4 sm:gap-5">
-            <div className={`rounded-2xl sm:rounded-3xl border ${theme.borderStrong} ${theme.panelBg} p-5 sm:p-7 md:p-9`}>
+            <div
+              className={`rounded-2xl sm:rounded-3xl border ${theme.borderStrong} ${theme.panelBg} p-5 sm:p-7 md:p-9`}
+            >
               <span className="text-[10px] uppercase tracking-[0.2em] text-red-400">
                 The idea
               </span>
@@ -270,10 +299,14 @@ export default function NexusAbout() {
               </div>
             </div>
 
-            <div className={`relative rounded-2xl sm:rounded-3xl border ${theme.borderStrong} ${theme.panelBgStrong} p-5 sm:p-7 md:p-9 overflow-hidden`}>
+            <div
+              className={`relative rounded-2xl sm:rounded-3xl border ${theme.borderStrong} ${theme.panelBgStrong} p-5 sm:p-7 md:p-9 overflow-hidden`}
+            >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(244,63,94,0.08),transparent_45%)]" />
               <div className="relative">
-                <div className={`text-[10px] uppercase tracking-[0.2em] ${theme.text700} mb-6 sm:mb-7`}>
+                <div
+                  className={`text-[10px] uppercase tracking-[0.2em] ${theme.text700} mb-6 sm:mb-7`}
+                >
                   How Nexus thinks
                 </div>
                 <div className="flex flex-col items-center">
@@ -296,14 +329,18 @@ export default function NexusAbout() {
                         className={`p-2 sm:p-3 rounded-xl border ${theme.border} ${theme.chipBg} text-center`}
                       >
                         <Icon size={16} className="mx-auto text-pink-400" />
-                        <p className={`text-[9px] sm:text-[10px] ${theme.text500} mt-1.5 sm:mt-2`}>
+                        <p
+                          className={`text-[9px] sm:text-[10px] ${theme.text500} mt-1.5 sm:mt-2`}
+                        >
                           {name}
                         </p>
                       </div>
                     ))}
                   </div>
                   <div className="w-px h-7 sm:h-8 bg-gradient-to-b from-white/10 to-pink-500/30" />
-                  <div className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border ${theme.border} ${theme.chipBg} text-xs ${theme.text400} text-center`}>
+                  <div
+                    className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl border ${theme.border} ${theme.chipBg} text-xs ${theme.text400} text-center`}
+                  >
                     Unified response
                   </div>
                 </div>
@@ -338,7 +375,9 @@ export default function NexusAbout() {
                       0{index + 1}
                     </span>
                   </div>
-                  <h3 className={`text-sm font-semibold ${theme.text200} mt-5 sm:mt-6`}>
+                  <h3
+                    className={`text-sm font-semibold ${theme.text200} mt-5 sm:mt-6`}
+                  >
                     {title}
                   </h3>
                   <p className={`text-xs leading-5 ${theme.text600} mt-2`}>
@@ -382,7 +421,9 @@ export default function NexusAbout() {
                   <Icon size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-sm font-medium ${theme.text200}`}>{name}</p>
+                  <p className={`text-sm font-medium ${theme.text200}`}>
+                    {name}
+                  </p>
                   <p className={`text-[11px] leading-4 ${theme.text600} mt-1`}>
                     {text}
                   </p>
@@ -406,18 +447,20 @@ export default function NexusAbout() {
                 Bring research, coding, reasoning, web and document intelligence
                 into one AI workspace.
               </p>
-              <a
-                href="/chat"
+              <button
+                onClick={() => navigete('/chat')}
                 className="inline-flex items-center gap-2 mt-6 sm:mt-7 px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 text-sm font-semibold shadow-[0_0_35px_-12px_rgba(244,63,94,0.8)] hover:scale-[1.02] transition"
               >
                 Start using Nexus <ArrowRight size={15} />
-              </a>
+              </button>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className={`relative border-t ${theme.borderSubtle} ${theme.pageBg}`}>
+      <footer
+        className={`relative border-t ${theme.borderSubtle} ${theme.pageBg}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="group flex items-center gap-2.5">
@@ -439,14 +482,25 @@ export default function NexusAbout() {
                 Nexus<span className="text-red-500">AI</span>
               </span>
             </div>
-            <div className={`flex items-center gap-6 sm:gap-8 text-sm ${theme.text500}`}>
-              <a href="#" className={`hover:${theme.text300} transition-colors`}>
+            <div
+              className={`flex items-center gap-6 sm:gap-8 text-sm ${theme.text500}`}
+            >
+              <a
+                href="#"
+                className={`hover:${theme.text300} transition-colors`}
+              >
                 Privacy
               </a>
-              <a href="#" className={`hover:${theme.text300} transition-colors`}>
+              <a
+                href="#"
+                className={`hover:${theme.text300} transition-colors`}
+              >
                 Terms
               </a>
-              <a href="#" className={`hover:${theme.text300} transition-colors`}>
+              <a
+                href="#"
+                className={`hover:${theme.text300} transition-colors`}
+              >
                 Contact
               </a>
             </div>

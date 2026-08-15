@@ -1,10 +1,13 @@
-import React, { useState ,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Moon,
   Sparkles,
+  Sun,
   Zap,
   Brain,
   Globe,
@@ -13,6 +16,51 @@ import {
   Shield,
 } from "lucide-react";
 import { NexusLogo } from "../components/Nexus_Logo";
+import { toggleDarkMode } from "../features/Toggle/Toggle_slice";
+
+// ─── Theme ────────────────────────────────────────────────────────────
+
+const getTheme = (dark) => ({
+  dark,
+
+  pageBg: dark ? "bg-black" : "bg-zinc-50",
+  pageText: dark ? "text-white" : "text-zinc-900",
+
+  navBg: dark ? "bg-black/60" : "bg-white/70",
+  chipBg: dark ? "bg-white/[0.04]" : "bg-black/[0.04]",
+  chipBgActive: dark ? "bg-white/[0.08]" : "bg-white",
+  cardBg: dark ? "bg-white/[0.025]" : "bg-white",
+  cardBgHover: dark ? "hover:bg-white/[0.04]" : "hover:bg-black/[0.02]",
+  agentCardBg: dark ? "bg-white/[0.025]" : "bg-white",
+  agentCardHoverBg: dark ? "hover:bg-white/[0.04]" : "hover:bg-black/[0.02]",
+  buttonBg: dark ? "bg-white/[0.05]" : "bg-black/[0.04]",
+  buttonHoverBg: dark ? "hover:bg-white/[0.08]" : "hover:bg-black/[0.07]",
+
+  border: dark ? "border-white/[0.06]" : "border-zinc-200",
+  borderStrong: dark ? "border-white/[0.07]" : "border-zinc-200",
+  borderStronger: dark ? "border-white/[0.08]" : "border-zinc-300",
+  borderHover: dark ? "hover:border-white/[0.12]" : "hover:border-zinc-300",
+  borderHoverStrong: dark ? "hover:border-white/[0.15]" : "hover:border-zinc-400",
+  divider: dark ? "bg-white/[0.06]" : "bg-zinc-200",
+
+  text: dark ? "text-white" : "text-zinc-900",
+  text200: dark ? "text-zinc-200" : "text-zinc-800",
+  text400: dark ? "text-zinc-400" : "text-zinc-600",
+  text500: dark ? "text-zinc-500" : "text-zinc-500",
+  text600: dark ? "text-zinc-600" : "text-zinc-400",
+  text700: dark ? "text-zinc-700" : "text-zinc-400",
+
+  hoverText: dark ? "hover:text-white" : "hover:text-zinc-900",
+  hoverTextSoft: dark ? "hover:text-zinc-300" : "hover:text-zinc-700",
+
+  gridLine: dark
+    ? "bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)] opacity-[0.018]"
+    : "bg-[linear-gradient(rgba(0,0,0,1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,1)_1px,transparent_1px)] opacity-[0.03]",
+
+  radialMask: dark
+    ? "bg-[radial-gradient(circle_at_center,transparent_20%,black_80%)]"
+    : "bg-[radial-gradient(circle_at_center,transparent_20%,#fafafa_80%)]",
+});
 
 const plans = [
   {
@@ -109,8 +157,13 @@ export default function Pricing() {
   const navigate = useNavigate();
   const [yearly, setYearly] = useState(false);
 
+  const dispatch = useDispatch();
+  const darkMode = useSelector((state) => state.toggle.darkMode);
+  const theme = getTheme(darkMode);
+  const handleToggleTheme = () => dispatch(toggleDarkMode());
+
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
+    <div className={`min-h-screen ${theme.pageBg} ${theme.pageText} overflow-hidden`}>
 
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
@@ -129,25 +182,18 @@ export default function Pricing() {
           blur-[150px]
         " />
 
-        <div className="
-          absolute inset-0 opacity-[0.018]
-          bg-[linear-gradient(rgba(255,255,255,1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,1)_1px,transparent_1px)]
-          bg-[size:60px_60px]
-        " />
+        <div className={`absolute inset-0 ${theme.gridLine} bg-[size:60px_60px]`} />
 
-        <div className="
-          absolute inset-0
-          bg-[radial-gradient(circle_at_center,transparent_20%,black_80%)]
-        " />
+        <div className={`absolute inset-0 ${theme.radialMask}`} />
       </div>
 
       {/* Navbar */}
-      <nav className="
+      <nav className={`
         relative z-20
         h-[72px]
-        border-b border-white/[0.06]
-        bg-black/60 backdrop-blur-xl
-      ">
+        border-b ${theme.border}
+        ${theme.navBg} backdrop-blur-xl
+      `}>
         <div className="
           max-w-7xl mx-auto px-5
           h-full flex items-center justify-between
@@ -157,15 +203,15 @@ export default function Pricing() {
             onClick={() => navigate("/")}
             className="flex items-center gap-3 group"
           >
-            <div className="
+            <div className={`
               w-9 h-9 rounded-xl
-              bg-gradient-to-br from-zinc-950 via-black to-red-950/50
+              bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/50' : 'from-zinc-100 via-white to-red-100'}
               border border-red-500/25
               flex items-center justify-center
               shadow-[0_0_20px_-5px_rgba(244,63,94,0.5)]
               group-hover:border-pink-500/40
               transition
-            ">
+            `}>
               <NexusLogo size={25} />
             </div>
 
@@ -174,17 +220,34 @@ export default function Pricing() {
             </span>
           </button>
 
-          <button
-            onClick={() => navigate("/")}
-            className="
-              flex items-center gap-2
-              text-sm text-zinc-500
-              hover:text-white transition
-            "
-          >
-            <ArrowLeft size={16} />
-            Back to home
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={handleToggleTheme}
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              className={`
+                w-9 h-9 rounded-xl
+                border ${theme.borderStronger}
+                ${theme.chipBg}
+                flex items-center justify-center
+                ${theme.text500} ${theme.hoverText}
+                transition
+              `}
+            >
+              {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
+            <button
+              onClick={() => navigate("/")}
+              className={`
+                flex items-center gap-2
+                text-sm ${theme.text500}
+                ${theme.hoverText} transition
+              `}
+            >
+              <ArrowLeft size={16} />
+              Back to home
+            </button>
+          </div>
 
         </div>
       </nav>
@@ -230,13 +293,13 @@ export default function Pricing() {
               </span>
             </h1>
 
-            <p className="
+            <p className={`
               max-w-2xl mx-auto
               mt-6
-              text-zinc-500
+              ${theme.text500}
               text-base md:text-lg
               leading-relaxed
-            ">
+            `}>
               Start free and upgrade when you need more power.
               Get access to a complete team of specialized AI agents
               working together.
@@ -245,13 +308,13 @@ export default function Pricing() {
             {/* Billing Toggle */}
             <div className="flex justify-center mt-9">
 
-              <div className="
+              <div className={`
                 flex items-center
                 p-1
                 rounded-xl
-                bg-white/[0.04]
-                border border-white/[0.08]
-              ">
+                ${theme.chipBg}
+                border ${theme.borderStronger}
+              `}>
 
                 <button
                   onClick={() => setYearly(false)}
@@ -262,8 +325,8 @@ export default function Pricing() {
                     transition
                     ${
                       !yearly
-                        ? "bg-white/[0.08] text-white shadow-lg"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        ? `${theme.chipBgActive} ${theme.text} shadow-lg`
+                        : `${theme.text500} ${theme.hoverTextSoft}`
                     }
                   `}
                 >
@@ -279,8 +342,8 @@ export default function Pricing() {
                     transition
                     ${
                       yearly
-                        ? "bg-white/[0.08] text-white shadow-lg"
-                        : "text-zinc-500 hover:text-zinc-300"
+                        ? `${theme.chipBgActive} ${theme.text} shadow-lg`
+                        : `${theme.text500} ${theme.hoverTextSoft}`
                     }
                   `}
                 >
@@ -331,10 +394,10 @@ export default function Pricing() {
                         md:-translate-y-3
                       `
                       : `
-                        border-white/[0.07]
-                        bg-white/[0.025]
-                        hover:border-white/[0.12]
-                        hover:bg-white/[0.04]
+                        ${theme.borderStrong}
+                        ${theme.cardBg}
+                        ${theme.borderHover}
+                        ${theme.cardBgHover}
                       `
                   }
                 `}
@@ -370,7 +433,7 @@ export default function Pricing() {
                       ${
                         plan.popular
                           ? "bg-gradient-to-br from-red-600 to-pink-600"
-                          : "bg-white/[0.05] border border-white/[0.07]"
+                          : `${theme.chipBg} border ${theme.borderStronger}`
                       }
                     `}>
                       {plan.name === "Free" && (
@@ -391,7 +454,7 @@ export default function Pricing() {
                         {plan.name}
                       </h2>
 
-                      <p className="text-xs text-zinc-600">
+                      <p className={`text-xs ${theme.text600}`}>
                         {plan.description}
                       </p>
                     </div>
@@ -405,7 +468,7 @@ export default function Pricing() {
                       ${yearly ? plan.yearly : plan.monthly}
                     </span>
 
-                    <span className="text-sm text-zinc-600 mb-2">
+                    <span className={`text-sm ${theme.text600} mb-2`}>
                       / month
                     </span>
 
@@ -418,13 +481,13 @@ export default function Pricing() {
                   )}
 
                   {plan.name === "Free" && (
-                    <p className="text-xs text-zinc-600 mb-5">
+                    <p className={`text-xs ${theme.text600} mb-5`}>
                       No credit card required
                     </p>
                   )}
 
                   {plan.name === "Enterprise" && (
-                    <p className="text-xs text-zinc-600 mb-5">
+                    <p className={`text-xs ${theme.text600} mb-5`}>
                       Built for growing teams
                     </p>
                   )}
@@ -453,11 +516,11 @@ export default function Pricing() {
                             hover:scale-[1.01]
                           `
                           : `
-                            bg-white/[0.05]
-                            border border-white/[0.08]
-                            text-zinc-200
-                            hover:bg-white/[0.08]
-                            hover:border-white/[0.15]
+                            ${theme.buttonBg}
+                            border ${theme.borderStronger}
+                            ${theme.text200}
+                            ${theme.buttonHoverBg}
+                            ${theme.borderHoverStrong}
                           `
                       }
                     `}
@@ -473,22 +536,22 @@ export default function Pricing() {
                 </div>
 
                 {/* Divider */}
-                <div className="
-                  h-px bg-white/[0.06]
+                <div className={`
+                  h-px ${theme.divider}
                   my-7
-                " />
+                `} />
 
                 {/* Features */}
                 <div className="flex-1">
 
-                  <p className="
+                  <p className={`
                     text-[10px]
                     uppercase
                     tracking-[0.18em]
-                    text-zinc-600
+                    ${theme.text600}
                     font-semibold
                     mb-5
-                  ">
+                  `}>
                     What's included
                   </p>
 
@@ -514,7 +577,7 @@ export default function Pricing() {
                           />
                         </div>
 
-                        <span className="text-sm text-zinc-400">
+                        <span className={`text-sm ${theme.text400}`}>
                           {feature}
                         </span>
                       </div>
@@ -530,11 +593,11 @@ export default function Pricing() {
         </section>
 
         {/* AI Team */}
-        <section className="
+        <section className={`
           relative
-          border-t border-white/[0.05]
+          border-t ${theme.borderStrong}
           py-20 px-5
-        ">
+        `}>
 
           <div className="
             absolute inset-0
@@ -575,12 +638,12 @@ export default function Pricing() {
                 </span>
               </h2>
 
-              <p className="
-                text-zinc-600
+              <p className={`
+                ${theme.text600}
                 max-w-xl mx-auto
                 mt-4
                 text-sm md:text-base
-              ">
+              `}>
                 Nexus automatically chooses the right agents for
                 each task and combines their expertise into one answer.
               </p>
@@ -600,15 +663,15 @@ export default function Pricing() {
                 return (
                   <div
                     key={agent.name}
-                    className="
+                    className={`
                       rounded-2xl
-                      border border-white/[0.06]
-                      bg-white/[0.025]
+                      border ${theme.borderStrong}
+                      ${theme.agentCardBg}
                       p-5
                       hover:border-red-500/20
-                      hover:bg-white/[0.04]
+                      ${theme.agentCardHoverBg}
                       transition
-                    "
+                    `}
                   >
 
                     <div className="
@@ -624,19 +687,19 @@ export default function Pricing() {
                       <Icon size={17} />
                     </div>
 
-                    <h3 className="
+                    <h3 className={`
                       text-sm font-semibold
-                      text-zinc-200
-                    ">
+                      ${theme.text200}
+                    `}>
                       {agent.name}
                     </h3>
 
-                    <p className="
+                    <p className={`
                       text-[11px]
                       leading-5
-                      text-zinc-600
+                      ${theme.text600}
                       mt-1
-                    ">
+                    `}>
                       {agent.text}
                     </p>
 
@@ -708,12 +771,12 @@ export default function Pricing() {
                 </span>
               </h2>
 
-              <p className="
+              <p className={`
                 max-w-lg mx-auto
-                text-zinc-500
+                ${theme.text500}
                 mt-4
                 text-sm md:text-base
-              ">
+              `}>
                 Start free today and experience what a team of
                 specialized AI agents can do together.
               </p>
@@ -748,11 +811,11 @@ export default function Pricing() {
       </main>
 
       {/* Footer */}
-      <footer className="
+      <footer className={`
         relative z-10
-        border-t border-white/[0.05]
+        border-t ${theme.borderStrong}
         py-8 px-5
-      ">
+      `}>
         <div className="
           max-w-7xl mx-auto
           flex flex-col sm:flex-row
@@ -768,14 +831,14 @@ export default function Pricing() {
             </span>
           </div>
 
-          <p className="text-xs text-zinc-700">
+          <p className={`text-xs ${theme.text700}`}>
             © 2026 Nexus AI. All rights reserved.
           </p>
 
-          <div className="
+          <div className={`
             flex items-center gap-2
-            text-xs text-zinc-600
-          ">
+            text-xs ${theme.text600}
+          `}>
             <Shield size={13} />
             Secure & private
           </div>

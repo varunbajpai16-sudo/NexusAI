@@ -48,14 +48,12 @@ const GlowButton = ({
   const styles = {
     primary:
       'bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-[0_0_30px_-5px_rgba(220,38,38,0.5)] hover:shadow-[0_0_40px_-5px_rgba(220,38,38,0.7)] hover:scale-[1.02]',
-    secondary:
-      darkMode
-        ? 'bg-white/5 border border-white/10 text-white backdrop-blur-sm hover:bg-white/10 hover:border-red-500/30 hover:shadow-[0_0_30px_-10px_rgba(220,38,38,0.3)]'
-        : 'bg-black/[0.03] border border-black/10 text-zinc-900 backdrop-blur-sm hover:bg-black/[0.06] hover:border-red-500/30 hover:shadow-[0_0_30px_-10px_rgba(220,38,38,0.15)]',
-    outline:
-      darkMode
-        ? 'border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.4)]'
-        : 'border border-red-500/40 text-red-600 hover:bg-red-500/10 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.2)]',
+    secondary: darkMode
+      ? 'bg-white/5 border border-white/10 text-white backdrop-blur-sm hover:bg-white/10 hover:border-red-500/30 hover:shadow-[0_0_30px_-10px_rgba(220,38,38,0.3)]'
+      : 'bg-black/[0.03] border border-black/10 text-zinc-900 backdrop-blur-sm hover:bg-black/[0.06] hover:border-red-500/30 hover:shadow-[0_0_30px_-10px_rgba(220,38,38,0.15)]',
+    outline: darkMode
+      ? 'border border-red-500/40 text-red-400 hover:bg-red-500/10 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.4)]'
+      : 'border border-red-500/40 text-red-600 hover:bg-red-500/10 hover:shadow-[0_0_20px_-5px_rgba(220,38,38,0.2)]',
   };
   return (
     <button
@@ -77,10 +75,9 @@ const GlowButton = ({
 
 const GlassCard = ({ children, className = '', glow = false }) => {
   const darkMode = useSelector((state) => state.toggle.darkMode);
-  const base =
-    darkMode
-      ? 'border border-white/[0.06] bg-white/[0.03] hover:border-red-500/20 hover:bg-white/[0.05]'
-      : 'border border-black/[0.06] bg-black/[0.02] hover:border-red-500/25 hover:bg-black/[0.04]';
+  const base = darkMode
+    ? 'border border-white/[0.06] bg-white/[0.03] hover:border-red-500/20 hover:bg-white/[0.05]'
+    : 'border border-black/[0.06] bg-black/[0.02] hover:border-red-500/25 hover:bg-black/[0.04]';
   return (
     <div
       className={`relative rounded-2xl backdrop-blur-xl p-5 sm:p-6 transition-all duration-500 ${base} ${glow ? 'shadow-[0_0_40px_-15px_rgba(220,38,38,0.15)]' : ''} ${className}`}
@@ -93,7 +90,9 @@ const GlassCard = ({ children, className = '', glow = false }) => {
 const SectionHeading = ({ subtitle, title, align = 'center' }) => {
   const darkMode = useSelector((state) => state.toggle.darkMode);
   return (
-    <div className={`mb-10 sm:mb-14 ${align === 'center' ? 'text-center' : ''}`}>
+    <div
+      className={`mb-10 sm:mb-14 ${align === 'center' ? 'text-center' : ''}`}
+    >
       <span className="inline-block px-3.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-medium tracking-wider uppercase bg-red-500/10 text-red-500 border border-red-500/20 mb-4">
         {subtitle}
       </span>
@@ -164,18 +163,16 @@ const Navbar = () => {
             className="flex items-center gap-2 sm:gap-2.5 group shrink-0"
           >
             <div
-              className="
-                                            relative w-9 h-9 rounded-lg
-                                            bg-gradient-to-br from-zinc-950 via-black to-red-950/40
-                                            border border-red-500/25
-                                            flex items-center justify-center
-                                            shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
-                                            group-hover:border-pink-500/50
-                                            group-hover:shadow-[0_0_28px_-5px_rgba(236,72,153,0.7)]
-                                            transition-all duration-300
-                                          "
+              className={`
+                          relative w-9 h-9 rounded-lg
+                          bg-gradient-to-br ${darkMode ? 'from-zinc-950 via-black to-red-950/40' : 'from-zinc-100 via-white to-red-100'}
+                          border border-red-500/25
+                          flex items-center justify-center
+                          shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
+                          transition-all duration-300
+                        `}
             >
-              <NexusLogo size={27} />
+              <NexusLogo size={20} />
             </div>
             <span
               className={`text-lg sm:text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-zinc-900'}`}
@@ -333,11 +330,15 @@ const HeroSection = () => {
         {/* Badge */}
         <div
           className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-full border mb-6 sm:mb-8 animate-fade-in ${
-            darkMode ? 'bg-white/5 border-white/10' : 'bg-black/[0.03] border-black/10'
+            darkMode
+              ? 'bg-white/5 border-white/10'
+              : 'bg-black/[0.03] border-black/10'
           }`}
         >
           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-          <span className={`text-xs sm:text-sm ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
+          <span
+            className={`text-xs sm:text-sm ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}
+          >
             Multi-Agent AI Platform
           </span>
         </div>
@@ -396,7 +397,7 @@ const HeroSection = () => {
 
 const NexusVisualization = () => {
   const darkMode = useSelector((state) => state.toggle.darkMode);
-  console.log(darkMode)
+  console.log(darkMode);
   const agents = [
     { name: 'Research', icon: Search, color: '#ef4444', angle: -72, delay: 0 },
     { name: 'Coding', icon: Code, color: '#f472b6', angle: 0, delay: 0.1 },
@@ -409,7 +410,9 @@ const NexusVisualization = () => {
   const centerX = 200;
   const centerY = 200;
   const ringStroke = darkMode ? 'rgba(220,38,38,0.1)' : 'rgba(220,38,38,0.2)';
-  const ringStroke2 = darkMode ? 'rgba(244,114,182,0.08)' : 'rgba(244,114,182,0.18)';
+  const ringStroke2 = darkMode
+    ? 'rgba(244,114,182,0.08)'
+    : 'rgba(244,114,182,0.18)';
   const nodeFill = darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.9)';
   const labelFill = darkMode ? '#a1a1aa' : '#52525b';
 
@@ -679,7 +682,9 @@ const AgentsSection = () => {
                   >
                     {agent.name}
                   </h3>
-                  <p className={`text-sm leading-relaxed ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  <p
+                    className={`text-sm leading-relaxed ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}
+                  >
                     {agent.description}
                   </p>
                 </div>
@@ -878,20 +883,22 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
             <div
-              className="
-                    relative w-9 h-9 rounded-lg
-                    bg-gradient-to-br from-zinc-950 via-black to-red-950/40
-                    border border-red-500/25
-                    flex items-center justify-center
-                    shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
-                    group-hover:border-pink-500/50
-                    group-hover:shadow-[0_0_28px_-5px_rgba(236,72,153,0.7)]
-                    transition-all duration-300
-                  "
+              className={`
+                            relative w-9 h-9 rounded-lg
+                            bg-gradient-to-br ${darkMode ? 'from-zinc-950 via-black to-red-950/40' : 'from-zinc-100 via-white to-red-100'}
+                            border border-red-500/25
+                            flex items-center justify-center
+                            shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
+                            group-hover:border-pink-500/50
+                            group-hover:shadow-[0_0_28px_-5px_rgba(236,72,153,0.7)]
+                            transition-all duration-300
+                          `}
             >
               <NexusLogo size={20} />
             </div>
-            <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
+            <span
+              className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-zinc-900'}`}
+            >
               Nexus<span className="text-red-500">AI</span>
             </span>
           </div>
@@ -900,17 +907,40 @@ const Footer = () => {
               darkMode ? 'text-zinc-500' : 'text-zinc-500'
             }`}
           >
-            <a href="#" className={darkMode ? 'hover:text-zinc-300 transition-colors' : 'hover:text-zinc-900 transition-colors'}>
+            <a
+              href="#"
+              className={
+                darkMode
+                  ? 'hover:text-zinc-300 transition-colors'
+                  : 'hover:text-zinc-900 transition-colors'
+              }
+            >
               Privacy
             </a>
-            <a href="#" className={darkMode ? 'hover:text-zinc-300 transition-colors' : 'hover:text-zinc-900 transition-colors'}>
+            <a
+              href="#"
+              className={
+                darkMode
+                  ? 'hover:text-zinc-300 transition-colors'
+                  : 'hover:text-zinc-900 transition-colors'
+              }
+            >
               Terms
             </a>
-            <a href="#" className={darkMode ? 'hover:text-zinc-300 transition-colors' : 'hover:text-zinc-900 transition-colors'}>
+            <a
+              href="#"
+              className={
+                darkMode
+                  ? 'hover:text-zinc-300 transition-colors'
+                  : 'hover:text-zinc-900 transition-colors'
+              }
+            >
               Contact
             </a>
           </div>
-          <p className={`text-sm order-2 md:order-3 ${darkMode ? 'text-zinc-600' : 'text-zinc-400'}`}>
+          <p
+            className={`text-sm order-2 md:order-3 ${darkMode ? 'text-zinc-600' : 'text-zinc-400'}`}
+          >
             © 2026 Nexus AI. All rights reserved.
           </p>
         </div>
