@@ -350,6 +350,24 @@ function Sidebar({
             <LayoutDashboard size={17} className="shrink-0" />
             {!isRail && 'Explore agents'}
           </button>
+
+          <button
+            title="Nexus AI Voice"
+            onClick={() => navigate('/nexus-voice')}
+            className={`w-full flex items-center gap-3 py-2.5 rounded-xl ${theme.text400} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover} text-sm ${
+              isRail ? 'justify-center px-0' : 'px-3'
+            }`}
+          >
+            <BrainCircuit size={17} className="shrink-0 text-pink-400" />
+            {!isRail && (
+              <span className="flex items-center gap-2">
+                Nexus AI Voice
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                  VOICE
+                </span>
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Conversations */}

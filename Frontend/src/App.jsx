@@ -14,6 +14,7 @@ import Pricing from './pages/View_pricing';
 import Documentation from './pages/Documentation';
 import NexusProfilePage from './pages/Profile';
 import NexusSettingsPage from './pages/Setting';
+import NexusVoicePage from "./pages/NexusVoice"
 function App() {
   const [count, setCount] = useState(0);
 
@@ -30,6 +31,7 @@ function App() {
         <Route path="/documentation" element={<Documentation />} />
         <Route path="/profile" element={<NexusProfilePage />} />
         <Route path="/settings" element={<NexusSettingsPage />} />
+         <Route path="/nexus-voice" element={<NexusVoicePage />} />
       </Routes>
     </>
   );
