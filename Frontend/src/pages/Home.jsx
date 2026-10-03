@@ -22,6 +22,7 @@ import {
   Cpu,
   Sun,
   Moon,
+  LogOut,
 } from 'lucide-react';
 import { NexusLogo } from '../components/Nexus_Logo';
 
@@ -132,11 +133,29 @@ const Navbar = () => {
   const darkMode = useSelector((state) => state.toggle.darkMode);
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
+
     window.addEventListener('scroll', handleScroll);
+
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Load the Google user saved after login.
+  useEffect(() => {
+    const storedUser = localStorage.getItem('nexus_user');
+
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Invalid stored user data:', error);
+        localStorage.removeItem('nexus_user');
+      }
+    }
   }, []);
 
   const navLinks = [
@@ -151,12 +170,23 @@ const Navbar = () => {
       : 'bg-white/80 backdrop-blur-xl border-b border-black/5'
     : 'bg-transparent';
 
+  const handleLogout = () => {
+    localStorage.removeItem('nexus_user');
+    localStorage.removeItem('nexus_token');
+
+    setUser(null);
+    setShowProfile(false);
+
+    navigate('/login');
+  };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${navBg}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-[72px]">
+
           {/* Logo */}
           <a
             href="/"
@@ -164,18 +194,25 @@ const Navbar = () => {
           >
             <div
               className={`
-                          relative w-9 h-9 rounded-lg
-                          bg-gradient-to-br ${darkMode ? 'from-zinc-950 via-black to-red-950/40' : 'from-zinc-100 via-white to-red-100'}
-                          border border-red-500/25
-                          flex items-center justify-center
-                          shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
-                          transition-all duration-300
-                        `}
+                relative w-9 h-9 rounded-lg
+                bg-gradient-to-br ${
+                  darkMode
+                    ? 'from-zinc-950 via-black to-red-950/40'
+                    : 'from-zinc-100 via-white to-red-100'
+                }
+                border border-red-500/25
+                flex items-center justify-center
+                shadow-[0_0_18px_-6px_rgba(244,63,94,0.6)]
+                transition-all duration-300
+              `}
             >
               <NexusLogo size={20} />
             </div>
+
             <span
-              className={`text-lg sm:text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-zinc-900'}`}
+              className={`text-lg sm:text-xl font-bold tracking-tight ${
+                darkMode ? 'text-white' : 'text-zinc-900'
+              }`}
             >
               Nexus<span className="text-red-500">AI</span>
             </span>
@@ -205,43 +242,140 @@ const Navbar = () => {
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">
             <ThemeToggle />
-            <a
-              onClick={() => navigate('/login')}
-              className={`px-5 py-2 text-sm font-medium transition-colors hover:cursor-pointer ${
-                darkMode
-                  ? 'text-zinc-300 hover:text-white'
-                  : 'text-zinc-600 hover:text-zinc-900'
-              }`}
-            >
-              Login
-            </a>
-            <GlowButton
-              onClick={() => navigate('/register')}
-              variant="primary"
-              icon={ArrowRight}
-            >
-              Get Started
-            </GlowButton>
+
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowProfile((prev) => !prev)}
+                  className={`flex items-center gap-2 p-1.5 rounded-xl border transition-all ${
+                    darkMode
+                      ? 'border-white/10 bg-white/5 hover:bg-white/10'
+                      : 'border-black/10 bg-black/[0.03] hover:bg-black/[0.06]'
+                  }`}
+                >
+                  <img
+                    src={user.picture}
+                    alt={user.name || 'User'}
+                    className="w-8 h-8 rounded-lg object-cover"
+                  />
+
+                  <span
+                    className={`max-w-[120px] truncate text-sm font-medium ${
+                      darkMode ? 'text-zinc-200' : 'text-zinc-700'
+                    }`}
+                  >
+                    {user.name || 'User'}
+                  </span>
+                </button>
+
+                {showProfile && (
+                  <div
+                    className={`absolute right-0 mt-3 w-64 rounded-2xl border backdrop-blur-xl shadow-xl overflow-hidden ${
+                      darkMode
+                        ? 'bg-zinc-950/95 border-white/10'
+                        : 'bg-white/95 border-black/10'
+                    }`}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={user.picture}
+                          alt={user.name || 'User'}
+                          className="w-11 h-11 rounded-xl object-cover"
+                        />
+
+                        <div className="min-w-0">
+                          <p
+                            className={`font-semibold truncate ${
+                              darkMode ? 'text-white' : 'text-zinc-900'
+                            }`}
+                          >
+                            {user.name || 'User'}
+                          </p>
+
+                          <p
+                            className={`text-xs truncate ${
+                              darkMode ? 'text-zinc-500' : 'text-zinc-500'
+                            }`}
+                          >
+                            {user.email || ''}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`border-t ${
+                        darkMode ? 'border-white/5' : 'border-black/5'
+                      }`}
+                    />
+
+                    <button
+                      onClick={handleLogout}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                        darkMode
+                          ? 'text-zinc-400 hover:text-white hover:bg-white/5'
+                          : 'text-zinc-600 hover:text-zinc-900 hover:bg-black/[0.04]'
+                      }`}
+                    >
+                      <LogOut size={16} />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className={`px-5 py-2 text-sm font-medium transition-colors hover:cursor-pointer ${
+                  darkMode
+                    ? 'text-zinc-300 hover:text-white'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                Login
+              </button>
+            )}
           </div>
 
           {/* Mobile Toggle */}
           <div className="lg:hidden flex items-center gap-2">
             <ThemeToggle />
+
+            {user ? (
+              <button
+                onClick={() => setShowProfile((prev) => !prev)}
+                className="rounded-full overflow-hidden border border-red-500/30"
+              >
+                <img
+                  src={user.picture}
+                  alt={user.name || 'User'}
+                  className="w-9 h-9 rounded-full object-cover"
+                />
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  darkMode
+                    ? 'text-zinc-300 hover:text-white hover:bg-white/5'
+                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-black/[0.04]'
+                }`}
+              >
+                Login
+              </button>
+            )}
+
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={`p-2 shrink-0 ${darkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
+              className={`p-2 shrink-0 ${
+                darkMode
+                  ? 'text-zinc-400 hover:text-white'
+                  : 'text-zinc-500 hover:text-zinc-900'
+              }`}
               aria-label="Toggle menu"
             >
-              {isOpen ? (
-                <X size={22} className="sm:hidden" />
-              ) : (
-                <Menu size={22} className="sm:hidden" />
-              )}
-              {isOpen ? (
-                <X size={24} className="hidden sm:block" />
-              ) : (
-                <Menu size={24} className="hidden sm:block" />
-              )}
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
@@ -250,9 +384,13 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isOpen && (
         <div
-          className={`lg:hidden backdrop-blur-xl border-b ${darkMode ? 'bg-black/95 border-white/5' : 'bg-white/95 border-black/5'}`}
+          className={`lg:hidden backdrop-blur-xl border-b ${
+            darkMode
+              ? 'bg-black/95 border-white/5'
+              : 'bg-white/95 border-black/5'
+          }`}
         >
-          <div className="px-4 py-6 space-y-3 max-h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="px-4 py-6 space-y-3">
             {navLinks.map((link) => (
               <a
                 key={link.name}
@@ -269,29 +407,55 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
-            <div
-              className={`pt-3 border-t flex flex-col gap-3 ${darkMode ? 'border-white/5' : 'border-black/5'}`}
-            >
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate('/login');
-                }}
-                className={`px-4 py-3 text-center ${darkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}`}
+
+            {user && (
+              <div
+                className={`pt-4 mt-2 border-t ${
+                  darkMode ? 'border-white/5' : 'border-black/5'
+                }`}
               >
-                Login
-              </button>
-              <GlowButton
-                variant="primary"
-                className="w-full"
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate('/register');
-                }}
-              >
-                Get Started
-              </GlowButton>
-            </div>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <img
+                    src={user.picture}
+                    alt={user.name || 'User'}
+                    className="w-10 h-10 rounded-xl object-cover"
+                  />
+
+                  <div className="min-w-0">
+                    <p
+                      className={`font-medium truncate ${
+                        darkMode ? 'text-white' : 'text-zinc-900'
+                      }`}
+                    >
+                      {user.name || 'User'}
+                    </p>
+
+                    <p
+                      className={`text-xs truncate ${
+                        darkMode ? 'text-zinc-500' : 'text-zinc-500'
+                      }`}
+                    >
+                      {user.email || ''}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    handleLogout();
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm ${
+                    darkMode
+                      ? 'text-zinc-400 hover:text-white'
+                      : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  <LogOut size={16} />
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

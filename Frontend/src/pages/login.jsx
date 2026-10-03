@@ -1,88 +1,91 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router";
-import { useSelector, useDispatch } from "react-redux";
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  Moon,
-  ShieldCheck,
-  Sparkles,
-  Sun,
-} from "lucide-react";
+import React from 'react';
+import { useNavigate } from 'react-router';
+import { useSelector, useDispatch } from 'react-redux';
+import { useGoogleLogin } from '@react-oauth/google';
+import { Moon, ShieldCheck, Sun } from 'lucide-react';
 import { FaChrome } from 'react-icons/fa';
-import { NexusLogo } from "../components/Nexus_Logo";
-import { toggleDarkMode } from "../features/Toggle/Toggle_slice";
+import { NexusLogo } from '../components/Nexus_Logo';
+import { toggleDarkMode } from '../features/Toggle/Toggle_slice';
 
 // ─── Theme ────────────────────────────────────────────────────────────
 
 const getTheme = (dark) => ({
   dark,
 
-  pageBg: dark ? "bg-black" : "bg-zinc-50",
-  pageText: dark ? "text-white" : "text-zinc-900",
+  pageBg: dark ? 'bg-black' : 'bg-zinc-50',
+  pageText: dark ? 'text-white' : 'text-zinc-900',
 
-  cardBg: dark ? "bg-white/[0.035]" : "bg-white",
-  inputBg: dark ? "bg-black/40" : "bg-black/[0.03]",
-  socialBg: dark ? "bg-white/[0.04]" : "bg-black/[0.03]",
-  socialHoverBg: dark ? "hover:bg-white/[0.07]" : "hover:bg-black/[0.06]",
-  chipBg: dark ? "bg-white/[0.03]" : "bg-black/[0.03]",
+  cardBg: dark ? 'bg-white/[0.035]' : 'bg-white',
+  socialBg: dark ? 'bg-white/[0.04]' : 'bg-black/[0.03]',
+  socialHoverBg: dark ? 'hover:bg-white/[0.07]' : 'hover:bg-black/[0.06]',
+  chipBg: dark ? 'bg-white/[0.03]' : 'bg-black/[0.03]',
 
-  border: dark ? "border-white/[0.08]" : "border-zinc-200",
-  borderSoft: dark ? "border-white/10" : "border-zinc-200",
-  borderInput: dark ? "border-white/[0.08]" : "border-zinc-300",
-  dividerLine: dark ? "bg-white/[0.08]" : "bg-zinc-200",
+  border: dark ? 'border-white/[0.08]' : 'border-zinc-200',
+  borderSoft: dark ? 'border-white/10' : 'border-zinc-200',
 
-  text: dark ? "text-white" : "text-zinc-900",
-  text300: dark ? "text-zinc-300" : "text-zinc-700",
-  text500: dark ? "text-zinc-500" : "text-zinc-500",
-  text600: dark ? "text-zinc-600" : "text-zinc-400",
-  text700: dark ? "text-zinc-700" : "text-zinc-400",
-
-  placeholder: dark ? "placeholder:text-zinc-700" : "placeholder:text-zinc-400",
+  text500: dark ? 'text-zinc-500' : 'text-zinc-500',
+  text600: dark ? 'text-zinc-600' : 'text-zinc-400',
 
   gridLine: dark
-    ? "bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)]"
-    : "bg-[linear-gradient(rgba(0,0,0,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.035)_1px,transparent_1px)]",
+    ? 'bg-[linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)]'
+    : 'bg-[linear-gradient(rgba(0,0,0,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.035)_1px,transparent_1px)]',
 
   radialMask: dark
-    ? "bg-[radial-gradient(circle_at_center,transparent_20%,black_80%)]"
-    : "bg-[radial-gradient(circle_at_center,transparent_20%,#fafafa_80%)]",
+    ? 'bg-[radial-gradient(circle_at_center,transparent_20%,black_80%)]'
+    : 'bg-[radial-gradient(circle_at_center,transparent_20%,#fafafa_80%)]',
 });
 
 const Login = () => {
   const navigate = useNavigate();
+  const googlelogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        console.log('Google Access Token:', tokenResponse.access_token);
+        const res = await fetch(
+          'https://www.googleapis.com/oauth2/v3/userinfo',
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          },
+        );
 
+        const user = await res.json();
+        localStorage.setItem(
+          'nexus_user',
+          JSON.stringify({
+            name: user.name,
+            email: user.email,
+            picture: user.picture,
+          }),
+        );
+        console.log('Google User:', user);
+        navigate("/")
+      } catch (error) {
+        console.error('Failed to get user:', error);
+      }
+    },
+
+    onError: (error) => {
+      console.error('Google Login Error:', error);
+    },
+  });
   const dispatch = useDispatch();
   const darkMode = useSelector((state) => state.toggle.darkMode);
   const theme = getTheme(darkMode);
+
   const handleToggleTheme = () => dispatch(toggleDarkMode());
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Add your login API here
-    console.log(form);
+  // Google authentication handler
+  const handleGoogleLogin = () => {
+    // Add your Google authentication logic here
+    console.log('Continue with Google');
   };
 
   return (
-    <div className={`min-h-screen ${theme.pageBg} ${theme.pageText} relative overflow-hidden flex items-center justify-center px-4 py-10`}>
-
+    <div
+      className={`min-h-screen ${theme.pageBg} ${theme.pageText} relative overflow-hidden flex items-center justify-center px-4 py-10`}
+    >
       {/* Background */}
       <div className={`absolute inset-0 ${theme.pageBg}`} />
 
@@ -90,31 +93,36 @@ const Login = () => {
 
       <div className="absolute bottom-[-200px] left-[-100px] w-[500px] h-[500px] rounded-full bg-pink-600/8 blur-[140px]" />
 
-      <div className={`absolute inset-0 opacity-40 ${theme.gridLine} bg-[size:60px_60px]`} />
+      <div
+        className={`absolute inset-0 opacity-40 ${theme.gridLine} bg-[size:60px_60px]`}
+      />
 
       <div className={`absolute inset-0 ${theme.radialMask}`} />
 
       {/* Theme toggle */}
       <button
         onClick={handleToggleTheme}
-        title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-        className={`absolute top-6 right-6 z-20 w-10 h-10 rounded-xl border ${theme.borderSoft} ${theme.chipBg} flex items-center justify-center ${theme.text500} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} transition`}
+        title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        className={`absolute top-6 right-6 z-20 w-10 h-10 rounded-xl border ${theme.borderSoft} ${theme.chipBg} flex items-center justify-center ${theme.text500} transition`}
       >
         {darkMode ? <Sun size={18} /> : <Moon size={18} />}
       </button>
 
-
       {/* Main */}
       <div className="relative z-10 w-full max-w-md">
-
         {/* Logo */}
         <div className="text-center mb-8">
-
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate('/')}
             className="inline-flex items-center gap-2.5 mb-7"
           >
-            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${theme.dark ? 'from-zinc-950 via-black to-red-950/50' : 'from-zinc-100 via-white to-red-100'} border border-red-500/25 flex items-center justify-center shadow-[0_0_25px_-5px_rgba(244,63,94,0.5)]`}>
+            <div
+              className={`w-11 h-11 rounded-xl bg-gradient-to-br ${
+                theme.dark
+                  ? 'from-zinc-950 via-black to-red-950/50'
+                  : 'from-zinc-100 via-white to-red-100'
+              } border border-red-500/25 flex items-center justify-center shadow-[0_0_25px_-5px_rgba(244,63,94,0.5)]`}
+            >
               <NexusLogo size={28} />
             </div>
 
@@ -123,9 +131,7 @@ const Login = () => {
             </span>
           </button>
 
-          <h1 className="text-3xl md:text-4xl font-bold mb-3">
-            Welcome back
-          </h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">Welcome back</h1>
 
           <p className={theme.text500}>
             Sign in to continue to your AI workspace
@@ -133,131 +139,35 @@ const Login = () => {
         </div>
 
         {/* Card */}
-        <div className={`relative rounded-3xl border ${theme.border} ${theme.cardBg} backdrop-blur-2xl p-6 sm:p-8 shadow-[0_0_80px_-30px_rgba(220,38,38,0.25)]`}>
-
+        <div
+          className={`relative rounded-3xl border ${theme.border} ${theme.cardBg} backdrop-blur-2xl p-6 sm:p-8 shadow-[0_0_80px_-30px_rgba(220,38,38,0.25)]`}
+        >
           {/* Top glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-px bg-gradient-to-r from-transparent via-red-500 to-transparent" />
 
-          {/* Google */}
+          {/* Google Login */}
           <button
             type="button"
-            className={`w-full h-12 rounded-xl border ${theme.borderSoft} ${theme.socialBg} ${theme.socialHoverBg} hover:${theme.dark ? 'border-white/20' : 'border-zinc-300'} transition flex items-center justify-center gap-3 text-sm font-medium`}
+            onClick={googlelogin}
+            className={`w-full h-12 rounded-xl border ${theme.borderSoft} ${theme.socialBg} ${theme.socialHoverBg} transition flex items-center justify-center gap-3 text-sm font-medium hover:border-zinc-300`}
           >
             <FaChrome size={18} />
             Continue with Google
           </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className={`h-px flex-1 ${theme.dividerLine}`} />
-            <span className={`text-xs ${theme.text600} uppercase tracking-wider`}>
-              or
-            </span>
-            <div className={`h-px flex-1 ${theme.dividerLine}`} />
+          {/* Security message */}
+          <div
+            className={`flex items-center justify-center gap-2 mt-7 text-xs ${theme.text600}`}
+          >
+            <ShieldCheck size={14} />
+            Secure authentication powered by Google
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-
-            {/* Email */}
-            <div>
-              <label className={`block text-sm font-medium ${theme.text300} mb-2`}>
-                Email address
-              </label>
-
-              <div className="relative">
-                <Mail
-                  size={18}
-                  className={`absolute left-4 top-1/2 -translate-y-1/2 ${theme.text600}`}
-                />
-
-                <input
-                  type="email"
-                  name="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="you@example.com"
-                  required
-                  className={`w-full h-12 rounded-xl ${theme.inputBg} border ${theme.borderInput} pl-11 pr-4 text-sm ${theme.text} ${theme.placeholder} outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/10 transition`}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className={`text-sm font-medium ${theme.text300}`}>
-                  Password
-                </label>
-
-                <button
-                  type="button"
-                  className="text-xs text-red-400 hover:text-red-300 transition"
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              <div className="relative">
-                <Lock
-                  size={18}
-                  className={`absolute left-4 top-1/2 -translate-y-1/2 ${theme.text600}`}
-                />
-
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  required
-                  className={`w-full h-12 rounded-xl ${theme.inputBg} border ${theme.borderInput} pl-11 pr-12 text-sm ${theme.text} ${theme.placeholder} outline-none focus:border-red-500/50 focus:ring-2 focus:ring-red-500/10 transition`}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-4 top-1/2 -translate-y-1/2 ${theme.text600} hover:${theme.text300}`}
-                >
-                  {showPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              className="group w-full h-12 rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-[0_0_30px_-8px_rgba(220,38,38,0.7)] hover:shadow-[0_0_40px_-5px_rgba(220,38,38,0.8)] transition-all duration-300"
-            >
-              Sign in
-              <ArrowRight
-                size={17}
-                className="group-hover:translate-x-1 transition-transform"
-              />
-            </button>
-          </form>
-
-          {/* Register */}
-          <p className={`text-center text-sm ${theme.text500} mt-7`}>
-            Don't have an account?{" "}
-            <button
-              onClick={() => navigate("/register")}
-              className="text-red-400 hover:text-red-300 font-medium transition"
-            >
-              Create account
-            </button>
-          </p>
         </div>
 
-        {/* Security */}
-        <div className={`flex items-center justify-center gap-2 mt-6 text-xs ${theme.text600}`}>
-          <ShieldCheck size={14} />
-          Your data is securely encrypted
-        </div>
-
+        {/* Footer */}
+        <p className={`text-center text-xs ${theme.text600} mt-6`}>
+          By continuing, you agree to NexusAI's terms and privacy policy.
+        </p>
       </div>
     </div>
   );

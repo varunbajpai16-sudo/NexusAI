@@ -1,0 +1,22 @@
+{
+  "name": "nexus-ai-backend",
+  "version": "1.0.0",
+  "description": "Backend for Nexus AI",
+  "private": true,
+  "workspaces": [
+    "gateway",
+    "services/*"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "prettier": "^3.9.9"
+  }
+}
