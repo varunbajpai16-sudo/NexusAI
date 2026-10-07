@@ -1,12 +1,10 @@
 import app from './app.js';
 import connectDB from "./Config/db.config.js"
-import { connectRedis } from "../../redis.js";
 const PORT = process.env.PORT;
 
 app.listen(PORT, async() => {
    await  connectDB();
-   await connectRedis();
-  console.log(`🚀 Nexus API Auth running on port ${PORT}`);
+  console.log(`🚀 Nexus API Chat running on port ${PORT}`);
 });
 
 

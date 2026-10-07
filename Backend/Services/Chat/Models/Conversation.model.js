@@ -1,0 +1,28 @@
+import mongoose from "mongoose";
+
+const conversationSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    title: {
+      type: String,
+      default: "New Conversation",
+      trim: true,
+      maxlength: 100,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Conversation = mongoose.model(
+  "Conversation",
+  conversationSchema
+);
+
+export default Conversation;

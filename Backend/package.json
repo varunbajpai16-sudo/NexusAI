@@ -18,5 +18,9 @@
   "type": "module",
   "devDependencies": {
     "prettier": "^3.9.9"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "redis": "^6.3.0"
   }
 }

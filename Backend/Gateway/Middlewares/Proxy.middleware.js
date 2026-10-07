@@ -9,7 +9,7 @@ export const authProxy = createProxyMiddleware({
   },
   on: {
     proxyReq: (proxyReq, req) => {
-      console.log("Authorization:", req.headers.authorization);
+      console.log('Authorization:', req.headers.authorization);
     },
   },
 });
@@ -17,9 +17,15 @@ export const authProxy = createProxyMiddleware({
 export const chatProxy = createProxyMiddleware({
   target: process.env.CHAT_SERVICE_URL,
   changeOrigin: true,
+  pathRewrite: {
+    '^/': '/api/chat/',
+  },
 });
 
 export const agentProxy = createProxyMiddleware({
   target: process.env.AGENT_SERVICE_URL,
   changeOrigin: true,
+  pathRewrite: {
+    '^/': '/api/agent/',
+  },
 });
