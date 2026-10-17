@@ -1,5 +1,11 @@
 import Router from 'express';
-import {createConversation, getConversations, savemessage, getmessages} from '../Controllers/Chat.Controller.js';
+import {
+  createConversation,
+  getConversations,
+  savemessage,
+  getmessages,
+  deleteConversation,
+} from '../Controllers/Chat.Controller.js';
 const router = Router();
 
 router.get('/health', async (req, res) => {
@@ -13,16 +19,16 @@ router.get('/health', async (req, res) => {
 });
 
 // Create a new conversation
-router.post("/conversation", createConversation);
+router.post('/conversation', createConversation);
 
 // Get all conversations of the authenticated user
-router.get("/conversations", getConversations);
+router.get('/getconversations', getConversations);
 
 // Save a message
-router.post("/message", savemessage);
+router.post('/message', savemessage);
 
 // Get messages of a conversation
-router.get("/conversation/:conversationId/messages", getmessages);
-
+router.get('/conversation/:conversationId/messages', getmessages);
+router.delete('/conversation/:conversationId', deleteConversation);
 
 export default router;

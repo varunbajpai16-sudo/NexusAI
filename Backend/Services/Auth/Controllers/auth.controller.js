@@ -51,7 +51,7 @@ const LoginController = async (req, res) => {
           avatar: newUser.avatar,
         }),
         {
-          EX: 3600,
+          EX: 86400, // 24 hours = 1 day
         }
       );
 

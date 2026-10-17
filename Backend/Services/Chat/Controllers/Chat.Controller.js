@@ -1,22 +1,24 @@
 import Conversation from '../Models/Conversation.model.js';
 import Message from '../Models/chat.model.js';
+
 const createConversation = async (req, res) => {
   try {
-    // Get authenticated user ID from middleware
-    const authtoken = req.headers.authorization;
-    const user = JSON.parse(authtoken);
+    const userId = req.headers['x-user-id'];
+    const { title } = req.body;
 
-    const { userId } = user;
     if (!userId) {
       return res.status(401).json({
-        message: 'Unauthorized',
+        message: 'User ID missing',
       });
     }
 
-    // Create new conversation
+    // Use the first user message as the conversation title.
+    const conversationTitle =
+      typeof title === 'string' && title.trim() ? title.trim().slice(0, 100) : 'New Conversation';
+
     const conversation = await Conversation.create({
       userId,
-      title: 'New Conversation',
+      title: conversationTitle,
     });
 
     return res.status(201).json({
@@ -35,10 +37,13 @@ const createConversation = async (req, res) => {
 const getConversations = async (req, res) => {
   try {
     // Get authenticated user ID from middleware
-    const authtoken = req.headers.authorization;
-    const user = JSON.parse(authtoken);
+    const userId = req.headers['x-user-id'];
 
-    const { userId } = user;
+    if (!userId) {
+      return res.status(401).json({
+        message: 'User ID missing',
+      });
+    }
 
     // Fetch conversations for the authenticated user
     const conversations = await Conversation.find({ userId }).sort({ createdAt: -1 });
@@ -57,37 +62,46 @@ const getConversations = async (req, res) => {
 };
 
 const savemessage = async (req, res) => {
-  try{
-      const { conversationId, role, content } = req.body;
-      const token = req.headers.authorization; // Assuming userId is sent in the authorization header
-      const user = JSON.parse(token);
-      const userId = user.userId;
-      if(!conversationId || !role || !content || !userId){
-        return res.status(400).json({
-          message: 'Message content, role, conversationId, and userId are required',
-        });
-      }
-      const message = await Message.create({
-        conversationId,
-        role,
-        content,
-        userId
+  try {
+    const { conversationId, role, content } = req.body;
+
+    // User ID forwarded by the Agent Service
+    const userId = req.headers['x-user-id'];
+
+    if (!conversationId || !role || !content || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message content, role, conversationId, and userId are required',
       });
-      return res.status(201).json({
-        message: 'Message saved successfully',
-        message
-      });
+    }
+
+    const savedMessage = await Message.create({
+      conversationId,
+      role,
+      content,
+      userId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Message saved successfully',
+      savedMessage,
+    });
+  } catch (error) {
+    console.error('Save Message Error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to save message',
+    });
   }
-  catch (error) {
-    console.error('Save Message Error from savemessage:', error);
-  }
-}
+};
 
 const getmessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
-    if(!conversationId) {
+    if (!conversationId) {
       return res.status(400).json({
         message: 'conversationId is required',
       });
@@ -105,5 +119,59 @@ const getmessages = async (req, res) => {
     });
   }
 };
+const deleteConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.headers['x-user-id'];
 
-export default { createConversation, getConversations, savemessage, getmessages };
+    if (!userId) {
+      return res.status(401).json({
+        message: 'User ID missing',
+      });
+    }
+
+    if (!conversationId) {
+      return res.status(400).json({
+        message: 'Conversation ID is required',
+      });
+    }
+
+    // Find the conversation owned by the authenticated user
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      userId,
+    });
+
+    if (!conversation) {
+      return res.status(404).json({
+        message: 'Conversation not found',
+      });
+    }
+
+    // Delete all messages belonging to this conversation
+    await Message.deleteMany({
+      conversationId: conversation._id,
+    });
+
+    // Delete the conversation
+    await Conversation.deleteOne({
+      _id: conversation._id,
+      userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Conversation deleted successfully',
+      conversationId,
+    });
+  } catch (error) {
+    console.error('Delete Conversation Error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete conversation',
+    });
+  }
+};
+
+export { createConversation, getConversations, savemessage, getmessages, deleteConversation };
