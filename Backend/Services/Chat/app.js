@@ -5,7 +5,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [process.env.MAIN_ORIGEN, process.env.SERVICE_ORIGEN];
+
 
 
 app.use(express.json());
