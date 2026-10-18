@@ -3,9 +3,10 @@ import axios from "axios";
 import { loginSuccess } from "../features/Auth/Auth.Slice";
 
 const API = axios.create({
+  // Gateway root URL — do not add /api/auth here
   baseURL:
     import.meta.env.VITE_API_URL ||
-    "http://localhost:5000/api/auth",
+    "http://localhost:5000",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -13,26 +14,35 @@ const API = axios.create({
 });
 
 export const loginUser = async (googleToken, dispatch) => {
-  const response = await API.post(
-    "auth/login",
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${googleToken}`,
-      },
+  try {
+    const response = await API.post(
+      "/api/auth/login",
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+        },
+      }
+    );
+
+    const user = response.data.user;
+
+    if (!user) {
+      throw new Error("User data missing from login response");
     }
-  );
 
-  const user = response.data.user;
+    // Update Redux state
+    dispatch(loginSuccess(user));
 
-  if (!user) {
-    throw new Error("User data missing from login response");
+    return user;
+  } catch (error) {
+    console.error(
+      "Login failed:",
+      error.response?.data || error.message
+    );
+
+    throw error;
   }
-
-  // Update Redux and localStorage
-  dispatch(loginSuccess(user));
-
-  return user;
 };
 
 export default API;
