@@ -1,16 +1,73 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { NexusLogo } from "./Nexus_Logo";
 
-/*
-  Premium NexusAI home-page loader.
+const SERVICES = [
+  {
+    name: "Gateway",
+    url: "https://nexusai-v0ra.onrender.com/health",
+  },
+  {
+    name: "Auth Service",
+    url: "https://nexusai-1-k401.onrender.com/health",
+  },
+  {
+    name: "Chat Service",
+    url: "https://nexusai-2-xypx.onrender.com/health",
+  },
+  {
+    name: "Agent Service",
+    url: "https://nexusai-3-7nd7.onrender.com/health",
+  },
+];
 
-  Usage:
-    <NexusHomeLoader onComplete={() => setLoading(false)} />
+const sleep = (ms, signal) =>
+  new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
 
-  Or simply render it conditionally from your Home component:
-    {loading && <NexusHomeLoader onComplete={() => setLoading(false)} />}
-*/
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+  });
+
+async function wakeService(service, signal, onStatus) {
+  for (let attempt = 1; attempt <= 8 && !signal.aborted; attempt += 1) {
+    try {
+      const response = await fetch(service.url, {
+        method: "GET",
+        signal: AbortSignal.any([
+          signal,
+          AbortSignal.timeout(8000),
+        ]),
+      });
+
+      if (response.ok) {
+        const result = { name: service.name, ready: true };
+        onStatus(result);
+        return result;
+      }
+    } catch {
+      // The service may still be starting, or the health request may fail.
+    }
+
+    if (attempt < 8 && !signal.aborted) {
+      await sleep(4000, signal);
+    }
+  }
+
+  const result = { name: service.name, ready: false };
+  onStatus(result);
+  return result;
+}
 
 export default function NexusHomeLoader({
   onComplete,
@@ -18,37 +75,107 @@ export default function NexusHomeLoader({
 }) {
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [warming, setWarming] = useState(true);
+  const [serviceStatus, setServiceStatus] = useState(
+    SERVICES.map((service) => ({
+      name: service.name,
+      ready: false,
+    }))
+  );
+
+  const onCompleteRef = useRef(onComplete);
 
   useEffect(() => {
-    const start = performance.now();
-    let frame;
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
-    const animate = (now) => {
-      const elapsed = now - start;
-      const value = Math.min(elapsed / duration, 1);
+  useEffect(() => {
+    let active = true;
+    let animationFrame;
+    let completionTimer;
+    let deadlineTimer;
+    const controller = new AbortController();
+    const startedAt = performance.now();
+    const minimumDuration = Math.max(0, duration);
+    const maxWait = 60000;
 
-      // Smooth progress curve.
+    const updateProgress = (now) => {
+      if (!active) return;
+
+      const elapsed = now - startedAt;
+      const value =
+        minimumDuration === 0
+          ? 1
+          : Math.min(elapsed / minimumDuration, 1);
       const eased = 1 - Math.pow(1 - value, 3);
-      setProgress(Math.round(eased * 100));
+
+      // Hold at 95% until the service warm-up finishes.
+      setProgress(Math.min(Math.round(eased * 95), 95));
 
       if (value < 1) {
-        frame = requestAnimationFrame(animate);
-      } else {
-        setTimeout(() => {
-          setVisible(false);
-          onComplete?.();
-        }, 180);
+        animationFrame = requestAnimationFrame(updateProgress);
       }
     };
 
-    frame = requestAnimationFrame(animate);
+    animationFrame = requestAnimationFrame(updateProgress);
+
+    const setOneServiceStatus = (result) => {
+      if (!active) return;
+
+      setServiceStatus((previous) =>
+        previous.map((service) =>
+          service.name === result.name ? result : service
+        )
+      );
+    };
+
+    const warmupPromise = Promise.all(
+      SERVICES.map((service) =>
+        wakeService(service, controller.signal, setOneServiceStatus)
+      )
+    );
+
+    const deadlinePromise = new Promise((resolve) => {
+      deadlineTimer = setTimeout(() => resolve(null), maxWait);
+    });
+
+    Promise.race([warmupPromise, deadlinePromise]).then(async (results) => {
+      if (!active) return;
+
+      if (results === null) {
+        controller.abort();
+      }
+
+      const elapsed = performance.now() - startedAt;
+      const remaining = Math.max(0, minimumDuration - elapsed);
+
+      await sleep(remaining, controller.signal);
+      if (!active) return;
+
+      setWarming(false);
+      setProgress(100);
+
+      completionTimer = setTimeout(() => {
+        if (!active) return;
+
+        setVisible(false);
+        onCompleteRef.current?.();
+      }, 400);
+    });
 
     return () => {
-      cancelAnimationFrame(frame);
+      active = false;
+      controller.abort();
+      cancelAnimationFrame(animationFrame);
+      clearTimeout(completionTimer);
+      clearTimeout(deadlineTimer);
     };
-  }, [duration, onComplete]);
+  }, [duration]);
 
   if (!visible) return null;
+
+  const readyCount = serviceStatus.filter((service) => service.ready).length;
+  const allReady = readyCount === SERVICES.length;
 
   return (
     <div
@@ -59,6 +186,8 @@ export default function NexusHomeLoader({
         flex items-center justify-center
         overflow-hidden
       "
+      role="status"
+      aria-live="polite"
     >
       {/* Ambient background */}
       <div className="absolute inset-0 pointer-events-none">
@@ -105,11 +234,9 @@ export default function NexusHomeLoader({
       </div>
 
       {/* Main loader */}
-      <div className="relative z-10 flex flex-col items-center">
-
+      <div className="relative z-10 flex flex-col items-center px-5">
         {/* Logo */}
         <div className="relative mb-8">
-          {/* Outer glow */}
           <div
             className="
               absolute inset-[-28px]
@@ -189,7 +316,7 @@ export default function NexusHomeLoader({
           />
         </div>
 
-        <p className="text-xs text-zinc-600 tracking-[0.16em] uppercase">
+        <p className="text-xs text-zinc-600 tracking-[0.16em] uppercase text-center">
           Your AI team is getting ready
         </p>
 
@@ -197,7 +324,7 @@ export default function NexusHomeLoader({
         <div className="w-[220px] mt-9">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] text-zinc-700">
-              Initializing Nexus
+              {warming ? "Waking Nexus services" : "Initialization complete"}
             </span>
 
             <span className="text-[10px] text-zinc-600 tabular-nums">
@@ -221,15 +348,25 @@ export default function NexusHomeLoader({
           </div>
         </div>
 
-        {/* Status */}
+        {/* Service connection status */}
         <div className="flex items-center gap-2 mt-5">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60 animate-ping" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+            {warming && (
+              <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60 animate-ping" />
+            )}
+            <span
+              className={`relative inline-flex rounded-full h-1.5 w-1.5 ${
+                allReady && !warming ? "bg-emerald-500" : "bg-red-500"
+              }`}
+            />
           </span>
 
-          <span className="text-[10px] text-zinc-700">
-            Connecting your AI agents
+          <span className="text-[10px] text-zinc-400">
+            {warming
+              ? `Waking services (${readyCount}/4 ready)`
+              : allReady
+                ? "All services connected"
+                : `${readyCount}/4 services ready · Some may need a retry`}
           </span>
         </div>
       </div>
@@ -243,12 +380,8 @@ export default function NexusHomeLoader({
 
       <style>{`
         @keyframes loaderFloat {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-7px);
-          }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-7px); }
         }
       `}</style>
     </div>
