@@ -1,73 +1,86 @@
-import axios from 'axios';
-import { nexusGraph } from '../Graph/graph.js';
 
-const CHAT_SERVICE_URL = process.env.CHAT_SERVICE_URL;
+import axios from "axios";
+import { nexusGraph } from "../Graph/graph.js";
+
+const CHAT_SERVICE_URL = process.env.CHAT_SERVICE_URL?.replace(/\/+$/, "");
 
 const runAgent = async (req, res) => {
   try {
     const { message, conversationId } = req.body;
 
-    // Your auth middleware replaces this header with the userId
-   const userId = req.headers["x-user-id"];
+    // User ID provided by the Gateway authentication middleware
+    const userId = req.headers["x-user-id"];
 
     if (!userId) {
       return res.status(401).json({
+        success: false,
         message: "User ID missing",
       });
     }
 
-    if (!message || typeof message !== 'string' || !message.trim() || !conversationId) {
+    if (
+      !message ||
+      typeof message !== "string" ||
+      !message.trim() ||
+      !conversationId
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Message and conversationId are required',
+        message: "Message and conversationId are required",
       });
     }
 
     if (!CHAT_SERVICE_URL) {
-      throw new Error('CHAT_SERVICE_URL is not configured');
+      return res.status(500).json({
+        success: false,
+        message: "CHAT_SERVICE_URL is not configured",
+      });
     }
 
     const content = message.trim();
 
-    // Forward the authenticated userId to the Chat Service
+    // Forward authenticated user ID to the Chat Service
     const headers = {
-      'x-user-id': userId,
+      "x-user-id": userId,
     };
+
+    // Chat Service endpoint
+    const messageUrl = `${CHAT_SERVICE_URL}/api/chat/message`;
 
     // 1. Save the user's message
     const savedUserMessage = await axios.post(
-      `${CHAT_SERVICE_URL}/api/chat/message`,
+      messageUrl,
       {
         conversationId,
-        role: 'user',
+        role: "user",
         content,
       },
       { headers }
     );
 
-    // Execute LangGraph
+    // 2. Execute the LangGraph workflow
     const result = await nexusGraph.invoke({
-      userMessage: message,
+      userMessage: content,
     });
 
     const assistantContent = result.agentResponse?.trim();
 
     if (!assistantContent) {
-      throw new Error('No response returned by the agent workflow');
+      throw new Error("No response returned by the agent workflow");
     }
 
-    // 4. Save the assistant's response
+    // 3. Save the assistant's response
     const savedAssistantMessage = await axios.post(
-      `${CHAT_SERVICE_URL}/api/chat/message`,
+      messageUrl,
       {
         conversationId,
-        role: 'assistant',
+        role: "assistant",
         content: assistantContent,
       },
       { headers }
     );
 
-    // 5. Return the result
+    // 4. Return the completed result
     return res.status(200).json({
       success: true,
       conversationId,
@@ -76,11 +89,18 @@ const runAgent = async (req, res) => {
       assistantMessage: savedAssistantMessage.data,
     });
   } catch (error) {
-    console.error('Agent Controller Error:', error.response?.data || error.message);
+    console.error("Agent Controller Error:", {
+      message: error.message,
+      status: error.response?.status,
+      response:
+        typeof error.response?.data === "string"
+          ? error.response.data.slice(0, 1000)
+          : error.response?.data,
+    });
 
     return res.status(500).json({
       success: false,
-      message: 'Failed to process agent request',
+      message: "Failed to process agent request",
     });
   }
 };
