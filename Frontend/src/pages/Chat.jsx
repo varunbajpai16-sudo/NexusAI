@@ -422,6 +422,8 @@ function Sidebar({
 
   conversations,
 
+  conversationsLoading,
+
   setActiveConversation,
 
   onDeleteConversation,
@@ -655,9 +657,24 @@ function Sidebar({
 
 
 
-            <div className="space-y-1">
-
-              {conversations.map((conversation) => {
+            <div className="space-y-2">
+              {conversationsLoading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={`conversation-skeleton-${index}`}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-3 ${theme.surface2} animate-pulse`}
+                    aria-hidden="true"
+                  >
+                    <div className={`h-4 w-4 rounded-md ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+                    <div className="flex-1 space-y-2">
+                      <div className={`h-3 rounded-full w-3/4 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+                      <div className={`h-2 rounded-full w-1/3 ${theme.dark ? 'bg-white/[0.06]' : 'bg-zinc-100'}`} />
+                    </div>
+                  </div>
+                ))
+              ) : conversations.length === 0 ? (
+                <p className={`px-3 py-4 text-xs ${theme.text600}`}>Your conversations will appear here.</p>
+              ) : conversations.map((conversation) => {
 
                 const active = activeConversation === conversation._id;
 
@@ -2748,6 +2765,58 @@ function FormattedMessage({ content, theme }) {
   return <div className="min-w-0 break-words">{blocks}</div>;
 }
 
+function ChatHistoryLoader({ theme }) {
+  return (
+    <div
+      className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-7 sm:py-9"
+      role="status"
+      aria-label="Loading conversation"
+    >
+      <div className="flex items-center gap-3 mb-7">
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/20 bg-gradient-to-br from-red-600/20 to-pink-600/20">
+          <span className="h-4 w-4 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
+        </span>
+        <div>
+          <p className={`text-sm font-medium ${theme.text200}`}>Loading conversation</p>
+          <p className={`text-xs mt-1 ${theme.text600}`}>Fetching your messages…</p>
+        </div>
+      </div>
+
+      <div className="space-y-7 animate-pulse" aria-hidden="true">
+        <div className="flex justify-end">
+          <div className={`w-[58%] sm:w-[44%] space-y-2 rounded-3xl p-4 ${theme.dark ? 'bg-white/[0.06]' : 'bg-zinc-100'}`}>
+            <div className={`h-3 rounded-full w-full ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+            <div className={`h-3 rounded-full w-2/3 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className={`h-9 w-9 shrink-0 rounded-xl ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          <div className="flex-1 space-y-3 pt-1">
+            <div className={`h-3 rounded-full w-28 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+            <div className={`h-3 rounded-full w-full ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+            <div className={`h-3 rounded-full w-[92%] ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+            <div className={`h-3 rounded-full w-3/5 ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <div className={`w-[46%] rounded-3xl p-4 ${theme.dark ? 'bg-white/[0.06]' : 'bg-zinc-100'}`}>
+            <div className={`h-3 rounded-full w-full ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className={`h-9 w-9 shrink-0 rounded-xl ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          <div className="flex-1 space-y-3 pt-1">
+            <div className={`h-3 rounded-full w-28 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+            <div className={`h-3 rounded-full w-[96%] ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+            <div className={`h-3 rounded-full w-4/5 ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+          </div>
+        </div>
+      </div>
+      <span className="sr-only">Please wait while the conversation history loads.</span>
+    </div>
+  );
+}
+
 function ChatMessages({ messages, isTyping, theme }) {
 
   return (
@@ -3062,6 +3131,8 @@ export default function NexusChatPage() {
 
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
 
   const conversations = useSelector(
@@ -3195,24 +3266,32 @@ export default function NexusChatPage() {
       dispatch(clearMessages());
       setHasStartedChat(false);
       setIsTyping(false);
+      setIsLoadingHistory(false);
       return;
     }
 
     dispatch(setReduxActiveConversation(conversationId));
+    dispatch(clearMessages());
     setHasStartedChat(true);
     setIsTyping(false);
+    setIsLoadingHistory(true);
 
     try {
       await chatService.getMessages(dispatch, conversationId);
     } catch (error) {
       console.error('Failed to load conversation messages:', error);
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
   useEffect(() => {
-    chatService.getConversations(dispatch).catch((error) => {
-      console.error('Failed to load conversations:', error);
-    });
+    setConversationsLoading(true);
+    chatService.getConversations(dispatch)
+      .catch((error) => {
+        console.error('Failed to load conversations:', error);
+      })
+      .finally(() => setConversationsLoading(false));
   }, [dispatch]);
 
   const handleSendMessage = async (message, options = {}) => {
@@ -3400,6 +3479,8 @@ export default function NexusChatPage() {
 
           conversations={conversations}
 
+          conversationsLoading={conversationsLoading}
+
           setActiveConversation={handleConversationSelection}
 
           onDeleteConversation={handleDeleteConversation}
@@ -3513,7 +3594,11 @@ export default function NexusChatPage() {
 
               <>
 
-                <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
+                {isLoadingHistory ? (
+                  <ChatHistoryLoader theme={theme} />
+                ) : (
+                  <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
+                )}
 
 
 
