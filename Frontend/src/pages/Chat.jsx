@@ -424,6 +424,8 @@ function Sidebar({
 
   conversationsLoading,
 
+  deletingConversationId,
+
   setActiveConversation,
 
   onDeleteConversation,
