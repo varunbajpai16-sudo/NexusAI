@@ -4,7 +4,7 @@ import redisClient from "../../redis.js";
 const prot = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({
       message: "Missing or invalid Bearer token",
     });
@@ -22,10 +22,9 @@ const prot = async (req, res, next) => {
     }
 
     req.headers["x-user-id"] = userId;
-
     next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
+    console.error("Auth middleware error:", error.message);
 
     return res.status(500).json({
       message: "Authentication failed",
