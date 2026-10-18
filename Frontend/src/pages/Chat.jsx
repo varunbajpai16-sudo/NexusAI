@@ -683,10 +683,12 @@ function Sidebar({
                 return (
                   <div
                     key={conversation._id}
-                    className={`group flex items-center gap-1 rounded-xl transition-all ${
-                      active
-                        ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
-                        : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
+                    className={`group flex items-center gap-1 rounded-xl transition-all duration-300 ${
+                      deletingConversationId === conversation._id
+                        ? 'opacity-60 scale-[0.98] border border-red-500/20 bg-red-500/[0.06]'
+                        : active
+                          ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
+                          : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
                     }`}
                   >
                     <button
@@ -713,15 +715,20 @@ function Sidebar({
                       type="button"
                       title="Delete conversation"
                       aria-label={`Delete ${conversation.title || 'conversation'}`}
+                      disabled={Boolean(deletingConversationId)}
                       onClick={(event) => {
                         event.stopPropagation();
                         onDeleteConversation(conversation._id);
                       }}
-                      className={`mr-2 p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition ${
+                      className={`mr-2 p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition disabled:cursor-not-allowed ${
                         theme.dark ? '' : 'hover:bg-red-50'
                       }`}
                     >
-                      <Trash2 size={14} />
+                      {deletingConversationId === conversation._id ? (
+                        <span className="block h-3.5 w-3.5 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
                     </button>
                   </div>
                 );
@@ -3090,6 +3097,7 @@ export default function NexusChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [deletingConversationId, setDeletingConversationId] = useState(null);
   const [dialog, setDialog] = useState(null);
 
   const conversations = useSelector(
@@ -3199,7 +3207,9 @@ export default function NexusChatPage() {
 
   const confirmDeleteConversation = async () => {
     const conversationId = dialog?.conversationId;
-    if (!conversationId) return;
+    if (!conversationId || deletingConversationId) return;
+
+    setDeletingConversationId(conversationId);
 
     try {
       await chatService.deleteConversation(dispatch, conversationId);
@@ -3211,7 +3221,13 @@ export default function NexusChatPage() {
       }
     } catch (error) {
       console.error('Failed to delete conversation:', error);
-      setDialog({ type: 'error', title: 'Could not delete conversation', message: error.response?.data?.message || 'Something went wrong. Please try again.' });
+      setDialog({
+        type: 'error',
+        title: 'Could not delete conversation',
+        message: error.response?.data?.message || 'Something went wrong. Please try again.',
+      });
+    } finally {
+      setDeletingConversationId(null);
     }
   };
 
@@ -3338,7 +3354,7 @@ export default function NexusChatPage() {
 
       {dialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="nexus-dialog-title">
-          <button type="button" aria-label="Close dialog" onClick={() => dialog.type === 'session' ? (localStorage.removeItem('user'), localStorage.removeItem('token'), localStorage.removeItem('accessToken'), navigate('/login', { replace: true })) : setDialog(null)} className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+          <button type="button" aria-label="Close dialog" onClick={() => deletingConversationId ? undefined : dialog.type === 'session' ? (localStorage.removeItem('user'), localStorage.removeItem('token'), localStorage.removeItem('accessToken'), navigate('/login', { replace: true })) : setDialog(null)} className="absolute inset-0 bg-black/70 backdrop-blur-md" />
           <div className={`relative w-full max-w-md overflow-hidden rounded-3xl border ${theme.dark ? 'border-white/10 bg-[#0b0b0e]' : 'border-zinc-200 bg-white'} shadow-[0_30px_100px_-25px_rgba(0,0,0,0.8)]`}>
             <div className="h-1 w-full bg-gradient-to-r from-red-600 via-pink-500 to-rose-400" />
             <div className="p-6 sm:p-7">
@@ -3350,8 +3366,8 @@ export default function NexusChatPage() {
               {dialog.type === 'delete' && <p className={`mt-3 rounded-xl border px-3 py-2 text-sm ${theme.dark ? 'border-white/10 bg-white/[0.03] text-zinc-200' : 'border-zinc-200 bg-zinc-50 text-zinc-800'} break-words`}>{dialog.title}</p>}
               <p className={`mt-3 text-sm leading-6 ${theme.text400}`}>{dialog.message}</p>
               <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                {dialog.type !== 'session' && <button type="button" onClick={() => setDialog(null)} className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition ${theme.dark ? 'border-white/10 text-zinc-300 hover:bg-white/[0.05]' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}>Cancel</button>}
-                <button type="button" onClick={() => { if (dialog.type === 'delete') confirmDeleteConversation(); else if (dialog.type === 'session') { localStorage.removeItem('user'); localStorage.removeItem('token'); localStorage.removeItem('accessToken'); localStorage.removeItem('userExpiry'); localStorage.removeItem('sessionExpiry'); localStorage.removeItem('expiresAt'); localStorage.removeItem('loginAt'); localStorage.removeItem('loginTime'); navigate('/login', { replace: true }); } else setDialog(null); }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 ${dialog.type === 'delete' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-red-950/30' : 'bg-gradient-to-r from-red-600 to-pink-600 shadow-red-950/30'}`}>{dialog.type === 'delete' ? 'Delete permanently' : dialog.type === 'session' ? 'Go to login' : 'Got it'}</button>
+                 {dialog.type !== 'session' && <button type="button" disabled={Boolean(deletingConversationId)} onClick={() => setDialog(null)} className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${theme.dark ? 'border-white/10 text-zinc-300 hover:bg-white/[0.05]' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}>Cancel</button>}
+                <button type="button" disabled={Boolean(deletingConversationId)} onClick={() => { if (dialog.type === 'delete') confirmDeleteConversation(); else if (dialog.type === 'session') { localStorage.removeItem('user'); localStorage.removeItem('token'); localStorage.removeItem('accessToken'); localStorage.removeItem('userExpiry'); localStorage.removeItem('sessionExpiry'); localStorage.removeItem('expiresAt'); localStorage.removeItem('loginAt'); localStorage.removeItem('loginTime'); navigate('/login', { replace: true }); } else setDialog(null); }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 ${dialog.type === 'delete' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-red-950/30' : 'bg-gradient-to-r from-red-600 to-pink-600 shadow-red-950/30'}`}>{deletingConversationId && dialog.type === 'delete' ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Deleting...</> : dialog.type === 'delete' ? 'Delete permanently' : dialog.type === 'session' ? 'Go to login' : 'Got it'}</button>
               </div>
             </div>
           </div>
@@ -3441,6 +3457,7 @@ export default function NexusChatPage() {
           setActiveConversation={handleConversationSelection}
 
           onDeleteConversation={handleDeleteConversation}
+                deletingConversationId={deletingConversationId}
 
           setSidebarOpen={setSidebarOpen}
 
