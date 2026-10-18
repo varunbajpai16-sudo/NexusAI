@@ -1461,7 +1461,7 @@ const NexusAIPageContent = () => {
   return (
     <>
       {loading && (
-        <NexusHomeLoader onComplete={() => setLoading(false)} />
+        <NexusHomeLoader onComplete={handleLoaderComplete} />
       )}
 
       <div

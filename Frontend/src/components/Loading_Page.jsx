@@ -5,21 +5,22 @@ import { NexusLogo } from "./Nexus_Logo";
 const SERVICES = [
   {
     name: "Gateway",
-    url: "https://nexusai-v0ra.onrender.com/health",
+    url: "https://nexusai-v0ra.onrender.com",
   },
   {
     name: "Auth Service",
-    url: "https://nexusai-1-k401.onrender.com/health",
+    url: "https://nexusai-v0ra.onrender.com/api/auth",
   },
   {
     name: "Chat Service",
-    url: "https://nexusai-2-xypx.onrender.com/health",
+    url: "https://nexusai-v0ra.onrender.com/api/chat",
   },
   {
     name: "Agent Service",
-    url: "https://nexusai-3-7nd7.onrender.com/health",
+    url: "https://nexusai-v0ra.onrender.com/api/agent",
   },
 ];
+
 
 const sleep = (ms, signal) =>
   new Promise((resolve) => {
@@ -69,12 +70,34 @@ async function wakeService(service, signal, onStatus) {
   return result;
 }
 
+// Cache the warm-up promise at module level. This makes service checks run only
+// once per page load, including when React StrictMode re-runs effects in dev.
+let servicesWarmupPromise = null;
+let loaderCompletedForPage = false;
+
+function warmServicesOnce() {
+  if (!servicesWarmupPromise) {
+    const controller = new AbortController();
+    const maxWaitTimer = setTimeout(() => controller.abort(), 60000);
+
+    servicesWarmupPromise = Promise.all(
+      SERVICES.map((service) =>
+        wakeService(service, controller.signal, () => {})
+      )
+    ).finally(() => clearTimeout(maxWaitTimer));
+  }
+
+  return servicesWarmupPromise;
+}
+
 export default function NexusHomeLoader({
   onComplete,
   duration = 5000,
 }) {
   const [progress, setProgress] = useState(0);
-  const [visible, setVisible] = useState(true);
+  // Module-level guard keeps the loader from reappearing if this component
+  // is mounted again during the same browser page session.
+  const [visible, setVisible] = useState(() => !loaderCompletedForPage);
   const [warming, setWarming] = useState(true);
   const [serviceStatus, setServiceStatus] = useState(
     SERVICES.map((service) => ({
@@ -90,14 +113,18 @@ export default function NexusHomeLoader({
   }, [onComplete]);
 
   useEffect(() => {
+    if (loaderCompletedForPage) {
+      setVisible(false);
+      onCompleteRef.current?.();
+      return undefined;
+    }
+
     let active = true;
     let animationFrame;
     let completionTimer;
     let deadlineTimer;
-    const controller = new AbortController();
     const startedAt = performance.now();
     const minimumDuration = Math.max(0, duration);
-    const maxWait = 60000;
 
     const updateProgress = (now) => {
       if (!active) return;
@@ -119,37 +146,15 @@ export default function NexusHomeLoader({
 
     animationFrame = requestAnimationFrame(updateProgress);
 
-    const setOneServiceStatus = (result) => {
+    warmServicesOnce().then(async (results) => {
       if (!active) return;
 
-      setServiceStatus((previous) =>
-        previous.map((service) =>
-          service.name === result.name ? result : service
-        )
-      );
-    };
-
-    const warmupPromise = Promise.all(
-      SERVICES.map((service) =>
-        wakeService(service, controller.signal, setOneServiceStatus)
-      )
-    );
-
-    const deadlinePromise = new Promise((resolve) => {
-      deadlineTimer = setTimeout(() => resolve(null), maxWait);
-    });
-
-    Promise.race([warmupPromise, deadlinePromise]).then(async (results) => {
-      if (!active) return;
-
-      if (results === null) {
-        controller.abort();
-      }
+      setServiceStatus(results);
 
       const elapsed = performance.now() - startedAt;
       const remaining = Math.max(0, minimumDuration - elapsed);
 
-      await sleep(remaining, controller.signal);
+      await sleep(remaining);
       if (!active) return;
 
       setWarming(false);
@@ -158,6 +163,7 @@ export default function NexusHomeLoader({
       completionTimer = setTimeout(() => {
         if (!active) return;
 
+        loaderCompletedForPage = true;
         setVisible(false);
         onCompleteRef.current?.();
       }, 400);
@@ -165,10 +171,8 @@ export default function NexusHomeLoader({
 
     return () => {
       active = false;
-      controller.abort();
       cancelAnimationFrame(animationFrame);
       clearTimeout(completionTimer);
-      clearTimeout(deadlineTimer);
     };
   }, [duration]);
 
