@@ -2171,7 +2171,7 @@ function EmptyState({ onSend, theme }) {
 
 
 
-function ChatInput({ onSend, theme, activeAgent, setActiveAgent }) {
+function ChatInput({ onSend, theme }) {
 
   const [message, setMessage] = useState('');
 
@@ -2279,48 +2279,6 @@ function ChatInput({ onSend, theme, activeAgent, setActiveAgent }) {
 
         >
 
-          {!message.trim() && (
-            <div className="px-3 sm:px-4 pt-3 pb-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles size={12} className="text-rose-400" />
-                <span className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${theme.text500}`}>
-                  Choose your agent
-                </span>
-                <span className={`text-[10px] ${theme.text700}`}>· or let Nexus decide</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 pb-1 overflow-hidden">
-                {agents.map((agent) => {
-                  const AgentIcon = agent.icon;
-                  const selected = activeAgent === agent.id;
-                  return (
-                    <button
-                      key={agent.id}
-                      type="button"
-                      onClick={() => setActiveAgent(agent.id)}
-                      title={agent.description}
-                      aria-pressed={selected}
-                      className={`group min-w-0 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
-                        selected
-                          ? 'border-rose-500/40 bg-gradient-to-r from-rose-500/15 to-pink-500/10 text-rose-300 shadow-[0_0_24px_-14px_rgba(244,63,94,0.8)]'
-                          : `${theme.border} ${theme.surface2} ${theme.text500} hover:border-rose-500/25 hover:text-rose-300`
-                      }`}
-                    >
-                      <span className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${agent.gradient} ${selected ? 'text-white' : 'text-white/90'} shadow-sm`}>
-                        <AgentIcon size={14} />
-                      </span>
-                      <span className="flex flex-col">
-                        <span className="text-[11px] font-semibold whitespace-nowrap">{agent.name}</span>
-                        <span className={`text-[9px] whitespace-nowrap ${selected ? 'text-rose-300/70' : theme.text700}`}>
-                          {agent.description}
-                        </span>
-                      </span>
-                      {selected && <Check size={12} className="ml-1 text-rose-400" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           <textarea
 
@@ -3666,7 +3624,7 @@ export default function NexusChatPage() {
 
 
 
-        {hasStartedChat && <ChatInput onSend={handleSendMessage} theme={theme} activeAgent={activeAgent} setActiveAgent={setActiveAgent} />}
+        {hasStartedChat && <ChatInput onSend={handleSendMessage} theme={theme} />}
 
       </main>
 
