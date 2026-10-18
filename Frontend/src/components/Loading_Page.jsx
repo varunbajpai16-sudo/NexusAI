@@ -9,15 +9,15 @@ const SERVICES = [
   },
   {
     name: "Auth Service",
-    url: "https://nexusai-v0ra.onrender.com/api/auth",
+    url: "https://nexusai-v0ra.onrender.com/api/auth/health",
   },
   {
     name: "Chat Service",
-    url: "https://nexusai-v0ra.onrender.com/api/chat",
+    url: "https://nexusai-v0ra.onrender.com/api/chat/health",
   },
   {
     name: "Agent Service",
-    url: "https://nexusai-v0ra.onrender.com/api/agent",
+    url: "https://nexusai-v0ra.onrender.com/api/agent/health",
   },
 ];
 
