@@ -1,4 +1,3 @@
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -15,30 +14,42 @@ dotenv.config();
 
 const app = express();
 
+const normalizeOrigin = (url = "") => url.trim().replace(/\/+$/, "");
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   process.env.FRONTEND_URL,
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .map(normalizeOrigin);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests without an Origin header, such as server-to-server calls.
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked origin: ${origin}`));
+    console.error("CORS blocked origin:", origin);
+    return callback(new Error("CORS origin not allowed"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-User-Id",
+  ],
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
 
+// Explicitly handle browser preflight requests.
+app.options(/.*/, cors(corsOptions));
+
 app.get("/api/gateway/health", (req, res) => {
-  res.send("Gateway API is running 🚀");
+  res.status(200).send("Gateway API is running 🚀");
 });
 
 app.use("/api/auth", authProxy);
