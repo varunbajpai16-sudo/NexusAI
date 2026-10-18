@@ -7,6 +7,9 @@ const app = express();
 
 
 app.use(express.json());
+app.use("/api/chat/health",(req,res)=>{
+    res.send("chat API is running 🚀 ");
+})
 app.use('/api/chat', chatRoute);
 
 export default app;

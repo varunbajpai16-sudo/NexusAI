@@ -424,8 +424,6 @@ function Sidebar({
 
   conversationsLoading,
 
-  deletingConversationId,
-
   setActiveConversation,
 
   onDeleteConversation,
@@ -685,12 +683,10 @@ function Sidebar({
                 return (
                   <div
                     key={conversation._id}
-                    className={`group flex items-center gap-1 rounded-xl transition-all duration-300 ${
-                      deletingConversationId === conversation._id
-                        ? 'opacity-60 scale-[0.98] border border-red-500/20 bg-red-500/[0.06]'
-                        : active
-                          ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
-                          : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
+                    className={`group flex items-center gap-1 rounded-xl transition-all ${
+                      active
+                        ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
+                        : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
                     }`}
                   >
                     <button
@@ -717,20 +713,15 @@ function Sidebar({
                       type="button"
                       title="Delete conversation"
                       aria-label={`Delete ${conversation.title || 'conversation'}`}
-                      disabled={Boolean(deletingConversationId)}
                       onClick={(event) => {
                         event.stopPropagation();
                         onDeleteConversation(conversation._id);
                       }}
-                      className={`mr-2 p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition disabled:cursor-not-allowed ${
+                      className={`mr-2 p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition ${
                         theme.dark ? '' : 'hover:bg-red-50'
                       }`}
                     >
-                      {deletingConversationId === conversation._id ? (
-                        <span className="block h-3.5 w-3.5 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
-                      ) : (
-                        <Trash2 size={14} />
-                      )}
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 );
@@ -2288,6 +2279,49 @@ function ChatInput({ onSend, theme, activeAgent, setActiveAgent }) {
 
         >
 
+          {!message.trim() && (
+            <div className="px-3 sm:px-4 pt-3 pb-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles size={12} className="text-rose-400" />
+                <span className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${theme.text500}`}>
+                  Choose your agent
+                </span>
+                <span className={`text-[10px] ${theme.text700}`}>· or let Nexus decide</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pb-1 overflow-hidden">
+                {agents.map((agent) => {
+                  const AgentIcon = agent.icon;
+                  const selected = activeAgent === agent.id;
+                  return (
+                    <button
+                      key={agent.id}
+                      type="button"
+                      onClick={() => setActiveAgent(agent.id)}
+                      title={agent.description}
+                      aria-pressed={selected}
+                      className={`group min-w-0 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
+                        selected
+                          ? 'border-rose-500/40 bg-gradient-to-r from-rose-500/15 to-pink-500/10 text-rose-300 shadow-[0_0_24px_-14px_rgba(244,63,94,0.8)]'
+                          : `${theme.border} ${theme.surface2} ${theme.text500} hover:border-rose-500/25 hover:text-rose-300`
+                      }`}
+                    >
+                      <span className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${agent.gradient} ${selected ? 'text-white' : 'text-white/90'} shadow-sm`}>
+                        <AgentIcon size={14} />
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="text-[11px] font-semibold whitespace-nowrap">{agent.name}</span>
+                        <span className={`text-[9px] whitespace-nowrap ${selected ? 'text-rose-300/70' : theme.text700}`}>
+                          {agent.description}
+                        </span>
+                      </span>
+                      {selected && <Check size={12} className="ml-1 text-rose-400" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <textarea
 
             ref={textareaRef}
@@ -3099,7 +3133,6 @@ export default function NexusChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
-  const [deletingConversationId, setDeletingConversationId] = useState(null);
   const [dialog, setDialog] = useState(null);
 
   const conversations = useSelector(
@@ -3119,7 +3152,30 @@ export default function NexusChatPage() {
 
   const navigate = useNavigate();
 
-  const chatEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+  const scrollToBottom = (behavior = 'smooth') => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+
+    setShowScrollToBottom(false);
+  };
+
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    setShowScrollToBottom(distanceFromBottom > 150);
+  };
 
   // Validate the locally stored session whenever the chat page opens.
   // Supports either a direct user object or { user, expiry/expiresAt }.
@@ -3209,9 +3265,7 @@ export default function NexusChatPage() {
 
   const confirmDeleteConversation = async () => {
     const conversationId = dialog?.conversationId;
-    if (!conversationId || deletingConversationId) return;
-
-    setDeletingConversationId(conversationId);
+    if (!conversationId) return;
 
     try {
       await chatService.deleteConversation(dispatch, conversationId);
@@ -3223,13 +3277,7 @@ export default function NexusChatPage() {
       }
     } catch (error) {
       console.error('Failed to delete conversation:', error);
-      setDialog({
-        type: 'error',
-        title: 'Could not delete conversation',
-        message: error.response?.data?.message || 'Something went wrong. Please try again.',
-      });
-    } finally {
-      setDeletingConversationId(null);
+      setDialog({ type: 'error', title: 'Could not delete conversation', message: error.response?.data?.message || 'Something went wrong. Please try again.' });
     }
   };
 
@@ -3326,15 +3374,26 @@ export default function NexusChatPage() {
     }
   };
 
+  // Start each selected conversation at the top, like ChatGPT.
+  // New messages do not force the reader to the bottom.
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-    chatEndRef.current?.scrollIntoView({
+    container.scrollTop = 0;
+    setShowScrollToBottom(false);
+  }, [activeConversation]);
 
-      behavior: 'smooth',
+  // Show the down-arrow when the current conversation has more content below.
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-    });
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
 
-  }, [messages, isTyping]);
+    setShowScrollToBottom(distanceFromBottom > 150);
+  }, [messages, isTyping, isLoadingHistory, hasStartedChat]);
 
 
 
@@ -3356,7 +3415,7 @@ export default function NexusChatPage() {
 
       {dialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="nexus-dialog-title">
-          <button type="button" aria-label="Close dialog" onClick={() => deletingConversationId ? undefined : dialog.type === 'session' ? (localStorage.removeItem('user'), localStorage.removeItem('token'), localStorage.removeItem('accessToken'), navigate('/login', { replace: true })) : setDialog(null)} className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+          <button type="button" aria-label="Close dialog" onClick={() => dialog.type === 'session' ? (localStorage.removeItem('user'), localStorage.removeItem('token'), localStorage.removeItem('accessToken'), navigate('/login', { replace: true })) : setDialog(null)} className="absolute inset-0 bg-black/70 backdrop-blur-md" />
           <div className={`relative w-full max-w-md overflow-hidden rounded-3xl border ${theme.dark ? 'border-white/10 bg-[#0b0b0e]' : 'border-zinc-200 bg-white'} shadow-[0_30px_100px_-25px_rgba(0,0,0,0.8)]`}>
             <div className="h-1 w-full bg-gradient-to-r from-red-600 via-pink-500 to-rose-400" />
             <div className="p-6 sm:p-7">
@@ -3368,8 +3427,8 @@ export default function NexusChatPage() {
               {dialog.type === 'delete' && <p className={`mt-3 rounded-xl border px-3 py-2 text-sm ${theme.dark ? 'border-white/10 bg-white/[0.03] text-zinc-200' : 'border-zinc-200 bg-zinc-50 text-zinc-800'} break-words`}>{dialog.title}</p>}
               <p className={`mt-3 text-sm leading-6 ${theme.text400}`}>{dialog.message}</p>
               <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                 {dialog.type !== 'session' && <button type="button" disabled={Boolean(deletingConversationId)} onClick={() => setDialog(null)} className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${theme.dark ? 'border-white/10 text-zinc-300 hover:bg-white/[0.05]' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}>Cancel</button>}
-                <button type="button" disabled={Boolean(deletingConversationId)} onClick={() => { if (dialog.type === 'delete') confirmDeleteConversation(); else if (dialog.type === 'session') { localStorage.removeItem('user'); localStorage.removeItem('token'); localStorage.removeItem('accessToken'); localStorage.removeItem('userExpiry'); localStorage.removeItem('sessionExpiry'); localStorage.removeItem('expiresAt'); localStorage.removeItem('loginAt'); localStorage.removeItem('loginTime'); navigate('/login', { replace: true }); } else setDialog(null); }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 ${dialog.type === 'delete' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-red-950/30' : 'bg-gradient-to-r from-red-600 to-pink-600 shadow-red-950/30'}`}>{deletingConversationId && dialog.type === 'delete' ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />Deleting...</> : dialog.type === 'delete' ? 'Delete permanently' : dialog.type === 'session' ? 'Go to login' : 'Got it'}</button>
+                {dialog.type !== 'session' && <button type="button" onClick={() => setDialog(null)} className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition ${theme.dark ? 'border-white/10 text-zinc-300 hover:bg-white/[0.05]' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}>Cancel</button>}
+                <button type="button" onClick={() => { if (dialog.type === 'delete') confirmDeleteConversation(); else if (dialog.type === 'session') { localStorage.removeItem('user'); localStorage.removeItem('token'); localStorage.removeItem('accessToken'); localStorage.removeItem('userExpiry'); localStorage.removeItem('sessionExpiry'); localStorage.removeItem('expiresAt'); localStorage.removeItem('loginAt'); localStorage.removeItem('loginTime'); navigate('/login', { replace: true }); } else setDialog(null); }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 ${dialog.type === 'delete' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-red-950/30' : 'bg-gradient-to-r from-red-600 to-pink-600 shadow-red-950/30'}`}>{dialog.type === 'delete' ? 'Delete permanently' : dialog.type === 'session' ? 'Go to login' : 'Got it'}</button>
               </div>
             </div>
           </div>
@@ -3459,7 +3518,6 @@ export default function NexusChatPage() {
           setActiveConversation={handleConversationSelection}
 
           onDeleteConversation={handleDeleteConversation}
-                deletingConversationId={deletingConversationId}
 
           setSidebarOpen={setSidebarOpen}
 
@@ -3543,19 +3601,14 @@ export default function NexusChatPage() {
         <div className="relative flex-1 min-h-0">
 
           <div
-
+            ref={messagesContainerRef}
+            onScroll={handleMessagesScroll}
             className="
-
-              h-full overflow-y-auto
-
+              h-full overflow-y-auto overscroll-contain
               scrollbar-thin
-
               scrollbar-thumb-black
-
               scrollbar-track-black
-
             "
-
           >
 
             {!hasStartedChat ? (
@@ -3576,17 +3629,34 @@ export default function NexusChatPage() {
                   <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
                 )}
 
-
-
-                <div ref={chatEndRef} />
-
               </>
 
             )}
 
           </div>
 
-
+          {showScrollToBottom && (
+            <button
+              type="button"
+              onClick={() => scrollToBottom('smooth')}
+              aria-label="Scroll to latest message"
+              title="Scroll to bottom"
+              className={`
+                absolute bottom-5 left-1/2 -translate-x-1/2
+                z-20 w-10 h-10 rounded-full
+                flex items-center justify-center
+                border shadow-lg backdrop-blur-xl
+                transition-all duration-200 hover:scale-105
+                ${
+                  theme.dark
+                    ? 'bg-[#252525] border-white/15 text-white hover:bg-[#333]'
+                    : 'bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-100'
+                }
+              `}
+            >
+              <ChevronDown size={20} />
+            </button>
+          )}
 
           <CodeWorkspacePanel open={rightPanel} setOpen={setRightPanel} theme={theme} messages={messages} />
 
