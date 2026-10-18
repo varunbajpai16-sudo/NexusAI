@@ -52,6 +52,11 @@ app.get("/api/gateway/health", (req, res) => {
   res.status(200).send("Gateway API is running 🚀");
 });
 
+app.use("/api/auth/health", authProxy);
+app.use("/api/chat/health", chatProxy);
+app.use("/api/agent/health", agentProxy);
+
+
 app.use("/api/auth", authProxy);
 app.use("/api/chat", prot, chatProxy);
 app.use("/api/agent", prot, agentProxy);
