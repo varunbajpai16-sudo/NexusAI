@@ -2,24 +2,19 @@ import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { NexusLogo } from "./Nexus_Logo";
 
+const GATEWAY_URL = "https://nexusai-v0ra.onrender.com";
+
 const SERVICES = [
-  {
-    name: "Gateway",
-    url: "https://nexusai-v0ra.onrender.com",
-  },
-  {
-    name: "Auth Service",
-    url: "https://nexusai-v0ra.onrender.com/api/auth/health",
-  },
-  {
-    name: "Chat Service",
-    url: "https://nexusai-v0ra.onrender.com/api/chat/health",
-  },
-  {
-    name: "Agent Service",
-    url: "https://nexusai-v0ra.onrender.com/api/agent/health",
-  },
+  { name: "Gateway", url: `${GATEWAY_URL}/api/gateway/health` },
+  { name: "Auth Service", url: `${GATEWAY_URL}/api/auth/health` },
+  { name: "Chat Service", url: `${GATEWAY_URL}/api/chat/health` },
+  { name: "Agent Service", url: `${GATEWAY_URL}/api/agent/health` },
 ];
+
+const SESSION_LOADER_KEY = "nexusai_loader_completed_v1";
+const MAX_WARMUP_TIME = 180000;
+const REQUEST_TIMEOUT = 15000;
+const RETRY_DELAY = 5000;
 
 
 const sleep = (ms, signal) =>
@@ -40,50 +35,65 @@ const sleep = (ms, signal) =>
     );
   });
 
-async function wakeService(service, signal, onStatus) {
-  for (let attempt = 1; attempt <= 8 && !signal.aborted; attempt += 1) {
+async function wakeService(service, signal) {
+  while (!signal.aborted) {
     try {
       const response = await fetch(service.url, {
         method: "GET",
+        cache: "no-store",
         signal: AbortSignal.any([
           signal,
-          AbortSignal.timeout(8000),
+          AbortSignal.timeout(REQUEST_TIMEOUT),
         ]),
       });
 
       if (response.ok) {
-        const result = { name: service.name, ready: true };
-        onStatus(result);
-        return result;
+        return { name: service.name, ready: true };
       }
     } catch {
-      // The service may still be starting, or the health request may fail.
+      // Render free services may need time to wake. Retry below.
     }
 
-    if (attempt < 8 && !signal.aborted) {
-      await sleep(4000, signal);
-    }
+    await sleep(RETRY_DELAY, signal);
   }
 
-  const result = { name: service.name, ready: false };
-  onStatus(result);
-  return result;
+  return { name: service.name, ready: false };
 }
 
-// Cache the warm-up promise at module level. This makes service checks run only
-// once per page load, including when React StrictMode re-runs effects in dev.
+// Shared across remounts and React StrictMode's development effect replay.
 let servicesWarmupPromise = null;
 let loaderCompletedForPage = false;
+
+function hasCompletedLoader() {
+  if (loaderCompletedForPage) return true;
+
+  try {
+    return sessionStorage.getItem(SESSION_LOADER_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function markLoaderCompleted() {
+  loaderCompletedForPage = true;
+
+  try {
+    sessionStorage.setItem(SESSION_LOADER_KEY, "true");
+  } catch {
+    // Storage may be unavailable; the in-memory guard still works.
+  }
+}
 
 function warmServicesOnce() {
   if (!servicesWarmupPromise) {
     const controller = new AbortController();
-    const maxWaitTimer = setTimeout(() => controller.abort(), 60000);
+    const maxWaitTimer = setTimeout(
+      () => controller.abort(),
+      MAX_WARMUP_TIME
+    );
 
     servicesWarmupPromise = Promise.all(
-      SERVICES.map((service) =>
-        wakeService(service, controller.signal, () => {})
-      )
+      SERVICES.map((service) => wakeService(service, controller.signal))
     ).finally(() => clearTimeout(maxWaitTimer));
   }
 
@@ -97,7 +107,7 @@ export default function NexusHomeLoader({
   const [progress, setProgress] = useState(0);
   // Module-level guard keeps the loader from reappearing if this component
   // is mounted again during the same browser page session.
-  const [visible, setVisible] = useState(() => !loaderCompletedForPage);
+  const [visible, setVisible] = useState(() => !hasCompletedLoader());
   const [warming, setWarming] = useState(true);
   const [serviceStatus, setServiceStatus] = useState(
     SERVICES.map((service) => ({
@@ -113,7 +123,7 @@ export default function NexusHomeLoader({
   }, [onComplete]);
 
   useEffect(() => {
-    if (loaderCompletedForPage) {
+    if (hasCompletedLoader()) {
       setVisible(false);
       onCompleteRef.current?.();
       return undefined;
@@ -163,7 +173,7 @@ export default function NexusHomeLoader({
       completionTimer = setTimeout(() => {
         if (!active) return;
 
-        loaderCompletedForPage = true;
+        markLoaderCompleted();
         setVisible(false);
         onCompleteRef.current?.();
       }, 400);
