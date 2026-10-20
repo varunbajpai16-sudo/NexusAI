@@ -12,7 +12,7 @@ const SERVICES = [
 ];
 
 const SESSION_LOADER_KEY = "nexusai_loader_completed_v1";
-const MAX_WARMUP_TIME = 180000;
+const MAX_WARMUP_TIME = 120000;
 const REQUEST_TIMEOUT = 15000;
 const RETRY_DELAY = 5000;
 
@@ -60,7 +60,8 @@ async function wakeService(service, signal) {
   return { name: service.name, ready: false };
 }
 
-// Shared across remounts and React StrictMode's development effect replay.
+// Share only an in-flight warm-up. Once it finishes, a later mount can
+// re-check services instead of reusing stale readiness results.
 let servicesWarmupPromise = null;
 let loaderCompletedForPage = false;
 
@@ -85,19 +86,25 @@ function markLoaderCompleted() {
 }
 
 function warmServicesOnce() {
-  if (!servicesWarmupPromise) {
-    const controller = new AbortController();
-    const maxWaitTimer = setTimeout(
-      () => controller.abort(),
-      MAX_WARMUP_TIME
-    );
+  if (servicesWarmupPromise) return servicesWarmupPromise;
 
-    servicesWarmupPromise = Promise.all(
-      SERVICES.map((service) => wakeService(service, controller.signal))
-    ).finally(() => clearTimeout(maxWaitTimer));
-  }
+  const controller = new AbortController();
+  const maxWaitTimer = setTimeout(
+    () => controller.abort(),
+    MAX_WARMUP_TIME
+  );
 
-  return servicesWarmupPromise;
+  const promise = Promise.all(
+    SERVICES.map((service) => wakeService(service, controller.signal))
+  ).finally(() => {
+    clearTimeout(maxWaitTimer);
+    if (servicesWarmupPromise === promise) {
+      servicesWarmupPromise = null;
+    }
+  });
+
+  servicesWarmupPromise = promise;
+  return promise;
 }
 
 export default function NexusHomeLoader({
@@ -123,18 +130,42 @@ export default function NexusHomeLoader({
   }, [onComplete]);
 
   useEffect(() => {
-    if (hasCompletedLoader()) {
-      setVisible(false);
-      onCompleteRef.current?.();
-      return undefined;
-    }
-
     let active = true;
     let animationFrame;
     let completionTimer;
-    let deadlineTimer;
+    const alreadyCompleted = hasCompletedLoader();
     const startedAt = performance.now();
     const minimumDuration = Math.max(0, duration);
+
+    // Keep the visual loader hidden if it already ran this session, but still
+    // re-check readiness in the background because a service may have slept.
+    if (alreadyCompleted) {
+      setVisible(false);
+      onCompleteRef.current?.();
+      setWarming(true);
+
+      warmServicesOnce()
+        .then((results) => {
+          if (!active) return;
+          setServiceStatus(results);
+          setWarming(false);
+        })
+        .catch((error) => {
+          console.error("Nexus service warm-up failed:", error);
+          if (!active) return;
+          setServiceStatus(
+            SERVICES.map((service) => ({
+              name: service.name,
+              ready: false,
+            }))
+          );
+          setWarming(false);
+        });
+
+      return () => {
+        active = false;
+      };
+    }
 
     const updateProgress = (now) => {
       if (!active) return;
@@ -146,7 +177,7 @@ export default function NexusHomeLoader({
           : Math.min(elapsed / minimumDuration, 1);
       const eased = 1 - Math.pow(1 - value, 3);
 
-      // Hold at 95% until the service warm-up finishes.
+      // Hold at 95% until the bounded service warm-up finishes.
       setProgress(Math.min(Math.round(eased * 95), 95));
 
       if (value < 1) {
@@ -156,10 +187,20 @@ export default function NexusHomeLoader({
 
     animationFrame = requestAnimationFrame(updateProgress);
 
-    warmServicesOnce().then(async (results) => {
+    const completeLoader = async (results) => {
       if (!active) return;
 
       setServiceStatus(results);
+
+      const readyCount = results.filter((service) => service.ready).length;
+      if (readyCount !== SERVICES.length) {
+        console.warn(
+          `Nexus warm-up finished with ${readyCount}/${SERVICES.length} services ready.`,
+          results
+            .filter((service) => !service.ready)
+            .map((service) => service.name)
+        );
+      }
 
       const elapsed = performance.now() - startedAt;
       const remaining = Math.max(0, minimumDuration - elapsed);
@@ -167,6 +208,9 @@ export default function NexusHomeLoader({
       await sleep(remaining);
       if (!active) return;
 
+      // Do not keep the user on the loading screen indefinitely. Partial
+      // readiness is reflected in the status text, and the gateway must still
+      // handle later cold starts for requests made during the session.
       setWarming(false);
       setProgress(100);
 
@@ -177,7 +221,19 @@ export default function NexusHomeLoader({
         setVisible(false);
         onCompleteRef.current?.();
       }, 400);
-    });
+    };
+
+    warmServicesOnce()
+      .then(completeLoader)
+      .catch((error) => {
+        console.error("Nexus service warm-up failed:", error);
+        return completeLoader(
+          SERVICES.map((service) => ({
+            name: service.name,
+            ready: false,
+          }))
+        );
+      });
 
     return () => {
       active = false;
@@ -377,10 +433,10 @@ export default function NexusHomeLoader({
 
           <span className="text-[10px] text-zinc-400">
             {warming
-              ? `Waking services (${readyCount}/4 ready)`
+              ? `Waking services (${readyCount}/${SERVICES.length} ready)`
               : allReady
-                ? "All services connected"
-                : `${readyCount}/4 services ready · Some may need a retry`}
+                ? "All services responded"
+                : `${readyCount}/${SERVICES.length} services ready · Some may need a retry`}
           </span>
         </div>
       </div>
