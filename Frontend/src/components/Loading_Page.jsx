@@ -2,13 +2,21 @@ import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { NexusLogo } from "./Nexus_Logo";
 
-const GATEWAY_URL = "https://nexusai-v0ra.onrender.com";
-
+// Direct health checks wake the Render services without going through the gateway.
+// Keep the API gateway for all normal application requests.
 const SERVICES = [
-  { name: "Gateway", url: `${GATEWAY_URL}/api/gateway/health` },
-  { name: "Auth Service", url: `${GATEWAY_URL}/api/auth/health` },
-  { name: "Chat Service", url: `${GATEWAY_URL}/api/chat/health` },
-  { name: "Agent Service", url: `${GATEWAY_URL}/api/agent/health` },
+  {
+    name: "Auth Service",
+    url: "https://nexusai-1-k401.onrender.com/api/auth/health",
+  },
+  {
+    name: "Chat Service",
+    url: "https://nexusai-2-xypx.onrender.com/api/chat/health",
+  },
+  {
+    name: "Agent Service",
+    url: "https://nexusai-3-7nd7.onrender.com/api/agent/health",
+  },
 ];
 
 const SESSION_LOADER_KEY = "nexusai_loader_completed_v1";

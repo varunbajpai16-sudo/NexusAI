@@ -44,79 +44,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
 
-app.get("/api/gateway/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    message: "Gateway API is running",
-  });
-});
-
-const services = [
-  {
-    name: "Auth Service",
-    baseUrl: process.env.AUTH_SERVICE_URL,
-    healthPath: process.env.AUTH_HEALTH_PATH || "/api/auth/health",
-  },
-  {
-    name: "Chat Service",
-    baseUrl: process.env.CHAT_SERVICE_URL,
-    healthPath: process.env.CHAT_HEALTH_PATH || "/api/chat/health",
-  },
-  {
-    name: "Agent Service",
-    baseUrl: process.env.AGENT_SERVICE_URL,
-    healthPath: process.env.AGENT_HEALTH_PATH || "/api/agent/health",
-  },
-];
-
-const sleep = (ms) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
-async function checkService(service) {
-  if (!service.baseUrl) {
-    return {
-      name: service.name,
-      ready: false,
-      error: "Service URL is missing",
-    };
-  }
-
-  const url =
-    `${service.baseUrl.replace(/\/+$/, "")}/` +
-    service.healthPath.replace(/^\/+/, "");
-
-  for (let attempt = 1; attempt <= 12; attempt++) {
-    try {
-      const response = await axios.get(url, {
-        timeout: 10000,
-        validateStatus: () => true,
-      });
-
-      if (response.status >= 200 && response.status < 300) {
-        console.log(`${service.name} is ready`);
-        return { name: service.name, ready: true };
-      }
-
-      console.warn(
-        `${service.name}: HTTP ${response.status}, attempt ${attempt}/12`
-      );
-    } catch (error) {
-      console.warn(
-        `${service.name}: attempt ${attempt}/12 failed`,
-        error.code || error.message
-      );
-    }
-
-    if (attempt < 12) await sleep(5000);
-  }
-
-  return {
-    name: service.name,
-    ready: false,
-    error: "Service did not become ready",
-  };
-}
-
 app.get("/api/gateway/warmup", async (req, res) => {
   try {
     const results = await Promise.all(services.map(checkService));
@@ -136,9 +63,6 @@ app.get("/api/gateway/warmup", async (req, res) => {
   }
 });
 
-app.use("/api/auth/health", authProxy);
-app.use("/api/chat/health", chatProxy);
-app.use("/api/agent/health", agentProxy);
 
 app.use("/api/auth", authProxy);
 app.use("/api/chat", prot, chatProxy);
