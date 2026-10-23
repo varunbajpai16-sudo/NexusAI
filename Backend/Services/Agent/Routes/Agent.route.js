@@ -1,8 +1,8 @@
 import Router from "express";
-import {runAgent} from "../Controller/Agent.controller.js";
+import {runAgent, test} from "../Controller/Agent.controller.js";
 
 const route = Router();
 
-route.post("/nexus", runAgent);
+route.post("/nexus", test);
 
 export default route;
