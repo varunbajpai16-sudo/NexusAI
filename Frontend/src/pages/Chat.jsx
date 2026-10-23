@@ -93,7 +93,7 @@ import {
 import { NexusLogo } from '../components/Nexus_Logo';
 
 import { toggleDarkMode } from '../features/Toggle/Toggle_slice';
-import chatService from '../services/chatService';
+import chatService from '../services/ChatApi.service';
 import {
   clearActiveConversation,
   setActiveConversation as setReduxActiveConversation,
