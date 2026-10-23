@@ -66,6 +66,6 @@ app.get("/api/gateway/warmup", async (req, res) => {
 
 app.use("/api/auth", authProxy);
 app.use("/api/chat", prot, chatProxy);
-app.use("/api/agent", agentProxy);
+app.use("/api/agent",port, agentProxy);
 
 export default app;

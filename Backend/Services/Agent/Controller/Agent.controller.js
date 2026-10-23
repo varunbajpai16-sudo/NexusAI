@@ -108,51 +108,7 @@ const runAgent = async (req, res) => {
 
 
 
-const test = async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    // Validate input
-    if (!message || typeof message !== "string" || !message.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Message is required",
-      });
-    }
-
-    // Execute LangGraph workflow
-    const result = await nexusGraph.invoke({
-      userMessage: message.trim(),
-    });
-
-    const assistantContent = result.agentResponse?.trim();
-
-    if (!assistantContent) {
-      return res.status(500).json({
-        success: false,
-        message: "No response returned by the agent workflow",
-      });
-    }
-
-    // Return agent response
-    return res.status(200).json({
-      success: true,
-      agent: result.agent,
-      message: message.trim(),
-      response: assistantContent,
-    });
-  } catch (error) {
-    console.error("Agent Controller Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to process agent request",
-      error: error.message,
-    });
-  }
-};
 
 
 
-
-export { runAgent,test };
+export { runAgent };

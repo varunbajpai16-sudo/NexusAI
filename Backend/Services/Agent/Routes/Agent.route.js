@@ -1,5 +1,5 @@
 import Router from "express";
-import {runAgent, test} from "../Controller/Agent.controller.js";
+import {runAgent} from "../Controller/Agent.controller.js";
 
 const route = Router();
 
