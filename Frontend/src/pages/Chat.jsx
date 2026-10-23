@@ -294,9 +294,12 @@ const agents = [
 
 ];
 
+// Keep this lightweight classifier in sync with the prompt types handled by the backend.
+const isCodingPrompt = (value = '') =>
+  /\b(code|coding|program(?:ming)?|developer|debug(?:ging)?|bug|error|exception|stack trace|syntax|compiler|compile|function|class|method|variable|algorithm|data structure|leetcode|dsa|react|jsx|tsx|javascript|typescript|node(?:\.js)?|express|mern|mongodb|mongoose|html|css|tailwind|frontend|front-end|backend|back-end|api|endpoint|rest api|graphql|sql|database|python|java|c\+\+|rust|golang|php|ruby|bash|shell script|terminal|command line|npm|npx|vite|git|github|docker|redis|redux|component|hook|state management|json|yaml|xml|regex|recursion|loop|array|string|linked list|tree traversal|binary search|dynamic programming|unit test|testing|refactor|repository|pull request|code review|code studio)\b/i.test(value);
 
 
-/* ─────────────────────────────────────────────────────────────
+ /* ─────────────────────────────────────────────────────────────
 
    SMALL COMPONENTS
 
@@ -1709,7 +1712,7 @@ function CodeWorkspacePanel({ open, setOpen, theme, messages }) {
 
 
 
-function EmptyState({ onSend, theme }) {
+function EmptyState({ onSend, onAgentSuggestion, theme }) {
 
   const suggestions = [
 
@@ -2005,7 +2008,11 @@ function EmptyState({ onSend, theme }) {
 
           placeholder="Ask Nexus anything..."
 
-          onChange={(e) => setPrompt(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setPrompt(value);
+            onAgentSuggestion?.(value);
+          }}
 
           onKeyDown={(e) => {
 
@@ -2171,7 +2178,7 @@ function EmptyState({ onSend, theme }) {
 
 
 
-function ChatInput({ onSend, theme }) {
+function ChatInput({ onSend, onAgentSuggestion, theme }) {
 
   const [message, setMessage] = useState('');
 
@@ -2185,9 +2192,9 @@ function ChatInput({ onSend, theme }) {
 
   const handleInput = (e) => {
 
-    setMessage(e.target.value);
-
-
+    const nextMessage = e.target.value;
+    setMessage(nextMessage);
+    onAgentSuggestion?.(nextMessage);
 
     if (textareaRef.current) {
 
@@ -2775,7 +2782,7 @@ function ChatHistoryLoader({ theme }) {
   );
 }
 
-function ChatMessages({ messages, isTyping, theme }) {
+function ChatMessages({ messages, isTyping, thinkingStatus, theme }) {
 
   return (
 
@@ -3009,33 +3016,33 @@ function ChatMessages({ messages, isTyping, theme }) {
 
             <div>
 
-              <div className={`text-sm font-semibold ${theme.text200} mb-3`}>
+              <div className={`text-sm font-semibold ${theme.text200} mb-2`}>
 
-                Nexus AI
+                {thinkingStatus?.agentName || 'Nexus AI'}
 
               </div>
 
+              <div className={`inline-flex flex-col gap-2 px-4 py-3 rounded-2xl ${theme.surface} border ${theme.border} min-w-[220px]`}>
 
+                <div className="flex items-center gap-2.5">
 
-              <div
+                  <span className="relative flex h-2.5 w-2.5">
 
-                className={`
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75 animate-ping" />
 
-                  flex items-center gap-1.5 px-4 py-3
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-400" />
 
-                  rounded-2xl ${theme.surface}
+                  </span>
 
-                  border ${theme.border}
+                  <span className={`text-xs font-medium ${theme.text300} animate-pulse`}>{thinkingStatus?.label || 'Thinking through your request...'}</span>
 
-                `}
+                </div>
 
-              >
+                <div className="h-1 w-full rounded-full overflow-hidden bg-white/10">
 
-                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" />
+                  <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-red-500 via-pink-500 to-rose-400 animate-[nexus-progress_1.6s_ease-in-out_infinite]" />
 
-                <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce [animation-delay:150ms]" />
-
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-bounce [animation-delay:300ms]" />
+                </div>
 
               </div>
 
@@ -3089,6 +3096,8 @@ export default function NexusChatPage() {
 
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isCodingRequest, setIsCodingRequest] = useState(false);
+  const [thinkingPhase, setThinkingPhase] = useState(0);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [dialog, setDialog] = useState(null);
@@ -3282,9 +3291,13 @@ export default function NexusChatPage() {
     // Open Code Studio automatically for programming-related prompts.
     // Keep this heuristic broad enough to catch code generation, debugging,
     // framework questions, algorithms, and common developer tooling.
-    const codingPromptPattern = /\b(code|coding|program(?:ming)?|developer|debug(?:ging)?|bug|error|exception|stack trace|syntax|compiler|compile|function|class|method|variable|algorithm|data structure|leetcode|dsa|react|jsx|tsx|javascript|typescript|node(?:\.js)?|express|mern|mongodb|mongoose|html|css|tailwind|frontend|front-end|backend|back-end|api|endpoint|rest api|graphql|sql|database|python|java|c\+\+|\bc\b|rust|golang|php|ruby|bash|shell script|terminal|command line|npm|npx|vite|git|github|docker|redis|redux|component|hook|state management|json|yaml|xml|regex|recursion|loop|array|string|linked list|tree traversal|binary search|dynamic programming|sql query|unit test|testing|refactor|repository|pull request|code review|code studio)\b/i;
-    if (codingPromptPattern.test(content)) {
+    const codingRequest = isCodingPrompt(content);
+    setIsCodingRequest(codingRequest);
+    if (codingRequest) {
+      setActiveAgent('coding');
       setRightPanel(true);
+    } else {
+      setActiveAgent('orchestrator');
     }
 
     setHasStartedChat(true);
@@ -3332,6 +3345,17 @@ export default function NexusChatPage() {
     }
   };
 
+  useEffect(() => {
+    if (!isTyping) {
+      setThinkingPhase(0);
+      return undefined;
+    }
+    const timer = window.setInterval(() => {
+      setThinkingPhase((phase) => phase + 1);
+    }, 1800);
+    return () => window.clearInterval(timer);
+  }, [isTyping]);
+
   // Start each selected conversation at the top, like ChatGPT.
   // New messages do not force the reader to the bottom.
   useEffect(() => {
@@ -3357,6 +3381,14 @@ export default function NexusChatPage() {
 
   return (
 
+    <>
+    <style>{`
+      @keyframes nexus-progress {
+        0% { transform: translateX(-120%); opacity: .55; }
+        50% { transform: translateX(80%); opacity: 1; }
+        100% { transform: translateX(260%); opacity: .55; }
+      }
+    `}</style>
     <div
 
       className={`
@@ -3573,7 +3605,11 @@ export default function NexusChatPage() {
 
               <div className="h-full flex items-center justify-center px-4 sm:px-5 py-6 sm:py-8 md:py-10">
 
-                <EmptyState onSend={handleSendMessage} theme={theme} />
+                <EmptyState onSend={handleSendMessage} onAgentSuggestion={(value) => {
+                  const coding = isCodingPrompt(value);
+                  setIsCodingRequest(coding);
+                  setActiveAgent(coding ? 'coding' : 'orchestrator');
+                }} theme={theme} />
 
               </div>
 
@@ -3584,7 +3620,7 @@ export default function NexusChatPage() {
                 {isLoadingHistory ? (
                   <ChatHistoryLoader theme={theme} />
                 ) : (
-                  <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
+                  <ChatMessages messages={messages} isTyping={isTyping} thinkingStatus={{ agentName: isCodingRequest ? 'Coding Agent' : 'Nexus AI', label: isCodingRequest ? ['Reading your request...', 'Planning the solution...', 'Generating code...', 'Checking the result...'][thinkingPhase % 4] : ['Thinking through your request...', 'Planning the response...', 'Putting the answer together...'][thinkingPhase % 3] }} theme={theme} />
                 )}
 
               </>
@@ -3624,11 +3660,16 @@ export default function NexusChatPage() {
 
 
 
-        {hasStartedChat && <ChatInput onSend={handleSendMessage} theme={theme} />}
+        {hasStartedChat && <ChatInput onSend={handleSendMessage} onAgentSuggestion={(value) => {
+          const coding = isCodingPrompt(value);
+          setIsCodingRequest(coding);
+          setActiveAgent(coding ? 'coding' : 'orchestrator');
+        }} theme={theme} />}
 
       </main>
 
     </div>
+    </>
 
   );
 
