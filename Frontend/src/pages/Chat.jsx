@@ -10,7 +10,6 @@ import {
 
   Brain,
 
-  BrainCircuit,
 
   Check,
 
@@ -21,6 +20,10 @@ import {
   Clipboard,
 
   Code2,
+  Eye,
+  Play,
+  Download,
+  X,
 
   Copy,
 
@@ -51,6 +54,7 @@ import {
   RefreshCcw,
 
   Search,
+  ShieldCheck,
 
   Send,
 
@@ -73,8 +77,6 @@ import {
   User,
 
   Users,
-
-  X,
 
   Zap,
 
@@ -218,19 +220,7 @@ const getTheme = (dark) => ({
 
 const agents = [
 
-  {
-
-    id: 'orchestrator',
-
-    name: 'Nexus Orchestrator',
-
-    description: 'Coordinates your AI team',
-
-    icon: Sparkles,
-
-    gradient: 'from-red-600 to-pink-600',
-
-  },
+ 
 
   {
 
@@ -432,7 +422,11 @@ function Sidebar({
 
   conversations,
 
+  conversationsLoading,
+
   setActiveConversation,
+
+  onDeleteConversation,
 
   setHasStartedChat,
 
@@ -441,6 +435,7 @@ function Sidebar({
   navigate,
 
   theme,
+  user,
 
 }) {
 
@@ -616,23 +611,7 @@ function Sidebar({
 
         <div className={`mb-4 ${isRail ? 'px-2' : 'px-3'}`}>
 
-          <button
-
-            title="All conversations"
-
-            className={`w-full flex items-center gap-3 py-2.5 rounded-xl ${theme.text400} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover} text-sm ${
-
-              isRail ? 'justify-center px-0' : 'px-3'
-
-            }`}
-
-          >
-
-            <MessageSquare size={17} className="shrink-0" />
-
-            {!isRail && 'All conversations'}
-
-          </button>
+         
 
 
 
@@ -658,39 +637,7 @@ function Sidebar({
 
 
 
-          <button
 
-            title="Nexus AI Voice"
-
-            onClick={() => navigate('/nexus-voice')}
-
-            className={`w-full flex items-center gap-3 py-2.5 rounded-xl ${theme.text400} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover} text-sm ${
-
-              isRail ? 'justify-center px-0' : 'px-3'
-
-            }`}
-
-          >
-
-            <BrainCircuit size={17} className="shrink-0 text-pink-400" />
-
-            {!isRail && (
-
-              <span className="flex items-center gap-2">
-
-                Nexus AI Voice
-
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">
-
-                  VOICE
-
-                </span>
-
-              </span>
-
-            )}
-
-          </button>
 
         </div>
 
@@ -700,7 +647,7 @@ function Sidebar({
 
         {!isRail && (
 
-          <div className="flex-1 overflow-y-auto px-3">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 scrollbar-thin scrollbar-thumb-black scrollbar-track-black">
 
             <div className={`px-3 mb-2 text-[10px] uppercase tracking-[0.18em] ${theme.text700} font-semibold`}>
 
@@ -710,98 +657,73 @@ function Sidebar({
 
 
 
-            <div className="space-y-1">
-
-              {conversations.map((conversation) => {
+            <div className="space-y-2">
+              {conversationsLoading ? (
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div
+                    key={`conversation-skeleton-${index}`}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-3 ${theme.surface2} animate-pulse`}
+                    aria-hidden="true"
+                  >
+                    <div className={`h-4 w-4 rounded-md ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+                    <div className="flex-1 space-y-2">
+                      <div className={`h-3 rounded-full w-3/4 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+                      <div className={`h-2 rounded-full w-1/3 ${theme.dark ? 'bg-white/[0.06]' : 'bg-zinc-100'}`} />
+                    </div>
+                  </div>
+                ))
+              ) : conversations.length === 0 ? (
+                <p className={`px-3 py-4 text-xs ${theme.text600}`}>Your conversations will appear here.</p>
+              ) : conversations.map((conversation) => {
 
                 const active = activeConversation === conversation._id;
 
 
 
                 return (
-
-                  <button
-
+                  <div
                     key={conversation._id}
-
-                    onClick={() => setActiveConversation(conversation._id)}
-
-                    className={`
-
-                      group w-full text-left px-3 py-3 rounded-xl
-
-                      transition-all duration-200
-
-                      ${
-
-                        active
-
-                          ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
-
-                          : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
-
-                      }
-
-                    `}
-
+                    className={`group flex items-center gap-1 rounded-xl transition-all ${
+                      active
+                        ? `${theme.activeItemBg} border ${theme.activeItemBorder}`
+                        : `border border-transparent ${theme.dark ? 'hover:bg-white/[0.035]' : 'hover:bg-black/[0.035]'}`
+                    }`}
                   >
-
-                    <div className="flex items-start gap-2">
-
-                      <MessageSquare
-
-                        size={15}
-
-                        className={`mt-0.5 shrink-0 ${
-
-                          active ? 'text-red-400' : theme.text600
-
-                        }`}
-
-                      />
-
-
-
-                      <div className="min-w-0">
-
-                        <p
-
-                          className={`text-sm truncate ${
-
-                            active ? theme.text200 : theme.text400
-
-                          }`}
-
-                        >
-
-                          {conversation.title}
-
-                        </p>
-
-
-
-                        <p className={`text-[11px] ${theme.text700} mt-1`}>
-
-                          {conversation.updatedAt ? new Date(conversation.updatedAt).toLocaleDateString() : 'Recently'}
-
-                        </p>
-
+                    <button
+                      type="button"
+                      onClick={() => setActiveConversation(conversation._id)}
+                      className="flex-1 min-w-0 text-left px-3 py-3"
+                    >
+                      <div className="flex items-start gap-2 min-w-0">
+                        <MessageSquare
+                          size={15}
+                          className={`mt-0.5 shrink-0 ${active ? 'text-red-400' : theme.text600}`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm truncate ${active ? theme.text200 : theme.text400}`}>
+                            {conversation.title || 'New conversation'}
+                          </p>
+                          <p className={`text-[11px] ${theme.text700} mt-1`}>
+                            {conversation.updatedAt ? new Date(conversation.updatedAt).toLocaleDateString() : 'Recently'}
+                          </p>
+                        </div>
                       </div>
-
-
-
-                      <MoreHorizontal
-
-                        size={15}
-
-                        className={`ml-auto opacity-0 group-hover:opacity-100 ${theme.text600} shrink-0`}
-
-                      />
-
-                    </div>
-
-                  </button>
-
+                    </button>
+                    <button
+                      type="button"
+                      title="Delete conversation"
+                      aria-label={`Delete ${conversation.title || 'conversation'}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteConversation(conversation._id);
+                      }}
+                      className={`mr-2 p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition ${
+                        theme.dark ? '' : 'hover:bg-red-50'
+                      }`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 );
 
               })}
@@ -851,76 +773,61 @@ function Sidebar({
         <div className={`relative p-3 border-t ${theme.borderSubtle} ${isRail ? 'lg:border-t-0' : ''}`}>
 
           <div
-
             className={`flex items-center gap-3 p-2 md:p-3 rounded-xl ${theme.surfaceHover} ${
-
               isRail ? 'justify-center' : ''
-
             }`}
-
-            title="Varun"
-
+            title={user?.name || user?.email || 'Account'}
           >
-
             <button
-
               onClick={() => navigate('/profile')}
-
-              className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center hover:scale-105 transition"
-
+              className="shrink-0 w-9 h-9 rounded-full overflow-hidden border border-red-500/25 bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center hover:scale-105 transition"
               title="Profile"
-
+              aria-label="Open profile"
             >
-
-              <User size={17} className="text-white" />
-
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user?.name || 'User'}
+                  referrerPolicy="no-referrer"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      user?.name || 'User'
+                    )}&background=27272a&color=ffffff`;
+                  }}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User size={17} className="text-white" />
+              )}
             </button>
 
-
-
             {!isRail && (
-
               <>
-
                 <button
-
                   onClick={() => navigate('/profile')}
-
                   className="min-w-0 flex-1 text-left"
-
                   title="Profile"
-
                 >
-
-                  <p className={`text-sm ${theme.text} truncate`}>Varun</p>
-
-                  <p className={`text-[11px] ${theme.text600}`}>Free plan</p>
-
+                  <p className={`text-sm ${theme.text} truncate`}>
+                    {user?.name || 'User'}
+                  </p>
+                  <p className={`text-[11px] ${theme.text600} truncate`}>
+                    {user?.email || 'Free plan'}
+                  </p>
                 </button>
-
-
 
                 <button
-
                   onClick={() => setAccountMenu(!accountMenu)}
-
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${theme.text600} hover:${theme.dark ? 'text-white' : 'text-zinc-900'} ${theme.surfaceHover3} transition`}
-
                   title="Account settings"
-
+                  aria-label="Account settings"
                 >
-
                   <Settings2 size={17} />
-
                 </button>
-
               </>
-
             )}
-
           </div>
-
-
 
           {accountMenu && !isRail && (
 
@@ -1386,7 +1293,7 @@ function TopBar({
 
 
 
-        <IconButton theme={theme} title="Agent activity" onClick={() => setRightPanel(true)}>
+        <IconButton theme={theme} title="Code workspace" onClick={() => setRightPanel(true)}>
 
           <PanelRight size={17} />
 
@@ -1694,277 +1601,105 @@ function AIControlsPanel({ open, setOpen, theme }) {
 
 
 
-function AgentPanel({ open, setOpen, theme }) {
+function CodeWorkspacePanel({ open, setOpen, theme, messages }) {
+  const [activeTab, setActiveTab] = useState('preview');
+  const [selectedBlock, setSelectedBlock] = useState(0);
+  const [manualCode, setManualCode] = useState('');
+  const [runVersion, setRunVersion] = useState(0);
+  const [copied, setCopied] = useState(false);
 
+  const codeBlocks = React.useMemo(() => {
+    const latest = [...(messages || [])].reverse().find((message) => message.role !== 'user' && message.content);
+    if (!latest) return [];
+    const content = typeof latest.content === 'string' ? latest.content : JSON.stringify(latest.content, null, 2);
+    const matches = [...content.matchAll(/```([^\n`]*)\n?([\s\S]*?)```/g)];
+    return matches.map((match, index) => ({
+      id: `${latest._id || latest.id || 'latest'}-${index}`,
+      language: (match[1] || 'text').trim().toLowerCase().split(/\s+/)[0] || 'text',
+      code: match[2].replace(/^\n/, '').trimEnd(),
+    }));
+  }, [messages]);
+
+  const selected = codeBlocks[selectedBlock] || codeBlocks[0];
+  const code = manualCode !== '' ? manualCode : (selected?.code || '');
+  const language = (selected?.language || 'text').toLowerCase();
+  const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  const previewMode = ['html', 'htm', 'svg', 'markdown', 'md', 'json', 'jsonc', 'mermaid', 'jsx', 'tsx', 'react', 'javascript', 'js', 'mjs', 'cjs', 'css'].includes(language) ? language : 'source';
+
+  const previewDocument = React.useMemo(() => {
+    const safeCode = code;
+    const shell = (title, body, extra = '') => `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>*,*:before,*:after{box-sizing:border-box}body{margin:0;padding:24px;font:14px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;color:#e4e4e7;background:#09090b}a{color:#fb7185}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#18181b;border:1px solid #27272a;padding:16px;border-radius:12px;color:#e4e4e7}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}h1,h2,h3{line-height:1.25}img,svg,video{max-width:100%}.muted{color:#a1a1aa;font-size:12px;margin-bottom:16px}</style>${extra}</head><body>${body}</body></html>`;
+    if (['html', 'htm'].includes(language)) return safeCode;
+    if (language === 'svg') return shell('SVG preview', `<div style="display:grid;place-items:center;min-height:70vh">${safeCode}</div>`);
+    if (['json', 'jsonc'].includes(language)) {
+      let formatted = safeCode;
+      try { formatted = JSON.stringify(JSON.parse(safeCode), null, 2); } catch (_) {}
+      return shell('JSON preview', `<div class="muted">JSON data preview · formatted when valid</div><pre><code>${escapeHtml(formatted)}</code></pre>`);
+    }
+    if (['markdown', 'md'].includes(language)) {
+      const html = escapeHtml(safeCode)
+        .replace(/^### (.*)$/gm, '<h3>$1</h3>').replace(/^## (.*)$/gm, '<h2>$1</h2>').replace(/^# (.*)$/gm, '<h1>$1</h1>')
+        .replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>').replace(/^[-*] (.*)$/gm, '<li>$1</li>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+      return shell('Markdown preview', `<main><p>${html}</p></main>`);
+    }
+    if (language === 'mermaid') return shell('Diagram preview', `<div class="muted">Mermaid diagram · rendered by Mermaid</div><pre class="mermaid">${escapeHtml(safeCode)}</pre>`, '<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"><\/script><script>mermaid.initialize({startOnLoad:true,theme:"dark",securityLevel:"strict"});<\/script>');
+    if (['jsx', 'tsx', 'react'].includes(language)) {
+      return shell('React preview', '<div id="root"></div><div id="error" style="color:#fda4af"></div>', `<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script><script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script><script type="text/babel" data-presets="react,typescript">${safeCode.replace(/<\/script/gi, '<\\/script')}<\/script><script type="text/babel" data-presets="react,typescript">try{if(typeof App!=='undefined')ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));else if(typeof defaultExport!=='undefined')ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(defaultExport));else document.getElementById('error').textContent='Define an App component (or defaultExport) to render a preview.'}catch(e){document.getElementById('error').textContent=e.message}<\/script>`);
+    }
+    if (['css'].includes(language)) return shell('CSS preview', `<div class="muted">CSS preview · styles applied to sample components</div><h1 class="sample-title">Your CSS styling preview</h1><button class="sample-button">Sample button</button><div class="sample-card">A sample card to inspect typography, colors, borders and spacing.</div>`, `<style>${safeCode}\n.sample-card{padding:20px;margin-top:16px;border:1px solid #52525b;border-radius:14px}.sample-button{padding:10px 16px;border-radius:10px;border:1px solid #71717a;background:#27272a;color:inherit}</style>`);
+    if (['javascript', 'js', 'mjs', 'cjs'].includes(language)) return shell('JavaScript preview', `<div class="muted">JavaScript sandbox · console output appears below</div><pre id="output">Running…</pre>`, `<script>const out=document.getElementById('output');const logs=[];const fmt=v=>{try{return typeof v==='string'?v:JSON.stringify(v,null,2)}catch(e){return String(v)}};console.log=(...a)=>logs.push(a.map(fmt).join(' '));console.error=(...a)=>logs.push('ERROR: '+a.map(fmt).join(' '));try{${safeCode.replace(/<\/script/gi, '<\\/script')}out.textContent=logs.join('\\n')||'Script executed. No console output.'}catch(e){out.textContent=e.stack||e.message}</script>`);
+    return shell('Source preview', `<div class="muted">Preview is not available for <strong>${escapeHtml(language.toUpperCase())}</strong> in a browser sandbox. Your code is still available to edit, copy and download.</div><pre style="white-space:pre-wrap;overflow-wrap:anywhere"><code>${escapeHtml(safeCode)}</code></pre>`);
+  }, [code, language, runVersion]);
+
+  useEffect(() => { setManualCode(''); setSelectedBlock(0); }, [messages]);
   if (!open) return null;
 
-
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch (_) { setCopied(false); }
+  };
+  const downloadCode = () => {
+    const extensionMap = { javascript: 'js', jsx: 'jsx', typescript: 'ts', tsx: 'tsx', html: 'html', htm: 'html', css: 'css', json: 'json', markdown: 'md', md: 'md', python: 'py', py: 'py', java: 'java', cpp: 'cpp', c: 'c', csharp: 'cs', 'c#': 'cs', go: 'go', rust: 'rs', sql: 'sql', bash: 'sh', shell: 'sh', yaml: 'yml', yml: 'yml', xml: 'xml', svg: 'svg', mermaid: 'mmd' };
+    const extension = extensionMap[language] || language.replace(/[^a-z0-9]/g, '') || 'txt';
+    const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = `nexus-code-${selectedBlock + 1}.${extension}`; link.click(); URL.revokeObjectURL(url);
+  };
 
   return (
-
     <>
-
-      {/* Backdrop (mobile & tablet only) */}
-
-      <div
-
-        onClick={() => setOpen(false)}
-
-        className={`fixed inset-0 z-30 ${theme.backdrop} backdrop-blur-sm lg:hidden`}
-
-      />
-
-
-
-      <aside
-
-        className={`
-
-          fixed lg:absolute
-
-          right-0 top-0 lg:top-[72px]
-
-          bottom-0 z-40
-
-          w-[86vw] max-w-[330px] sm:w-[330px]
-
-          ${theme.panelBg} backdrop-blur-2xl
-
-          border-l ${theme.border}
-
-          shadow-[-20px_0_50px_-30px_rgba(244,63,94,0.4)]
-
-        `}
-
-      >
-
-        <div className="h-full flex flex-col">
-
-          <div className={`h-16 px-4 sm:px-5 flex items-center justify-between border-b ${theme.borderSubtle}`}>
-
-            <div>
-
-              <h3 className={`text-sm font-semibold ${theme.text}`}>Agent activity</h3>
-
-              <p className={`text-[11px] ${theme.text600}`}>Live orchestration</p>
-
-            </div>
-
-
-
-            <IconButton theme={theme} onClick={() => setOpen(false)}>
-
-              <X size={16} />
-
-            </IconButton>
-
-          </div>
-
-
-
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-
-            <div className="relative">
-
-              <div className="absolute left-[17px] top-5 bottom-5 w-px bg-gradient-to-b from-red-500/50 via-pink-500/20 to-transparent" />
-
-
-
-              {[
-
-                {
-
-                  icon: Sparkles,
-
-                  name: 'Orchestrator',
-
-                  text: 'Understanding your request',
-
-                  status: 'Complete',
-
-                },
-
-                {
-
-                  icon: Search,
-
-                  name: 'Research Agent',
-
-                  text: 'Searching relevant sources',
-
-                  status: 'Complete',
-
-                },
-
-                {
-
-                  icon: Code2,
-
-                  name: 'Coding Agent',
-
-                  text: 'Designing implementation',
-
-                  status: 'Working',
-
-                },
-
-                {
-
-                  icon: Brain,
-
-                  name: 'Reasoning Agent',
-
-                  text: 'Validating solution',
-
-                  status: 'Waiting',
-
-                },
-
-              ].map((item, index) => {
-
-                const Icon = item.icon;
-
-
-
-                return (
-
-                  <div key={index} className="relative flex gap-3 pb-7">
-
-                    <div
-
-                      className={`
-
-                        relative z-10
-
-                        w-9 h-9 rounded-xl
-
-                        flex items-center justify-center
-
-                        border shrink-0
-
-                        ${
-
-                          item.status === 'Complete'
-
-                            ? 'bg-red-500/10 border-red-500/20 text-red-400'
-
-                            : item.status === 'Working'
-
-                              ? 'bg-pink-500/10 border-pink-500/20 text-pink-400'
-
-                              : `${theme.surface} ${theme.border} ${theme.text600}`
-
-                        }
-
-                      `}
-
-                    >
-
-                      <Icon size={16} />
-
-                    </div>
-
-
-
-                    <div className="pt-0.5 min-w-0">
-
-                      <div className="flex items-center gap-2">
-
-                        <p className={`text-sm ${theme.text200}`}>{item.name}</p>
-
-
-
-                        {item.status === 'Working' && (
-
-                          <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-pulse" />
-
-                        )}
-
-                      </div>
-
-
-
-                      <p className={`text-xs ${theme.text600} mt-1`}>{item.text}</p>
-
-
-
-                      <span
-
-                        className={`
-
-                          inline-block mt-2 text-[10px]
-
-                          ${
-
-                            item.status === 'Complete'
-
-                              ? 'text-red-400'
-
-                              : item.status === 'Working'
-
-                                ? 'text-pink-400'
-
-                                : theme.text700
-
-                          }
-
-                        `}
-
-                      >
-
-                        {item.status}
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                );
-
-              })}
-
-            </div>
-
-
-
-            {/* Stats */}
-
-            <div className="mt-3 grid grid-cols-2 gap-2">
-
-              <div className={`rounded-xl border ${theme.borderSubtle} ${theme.surface2} p-3`}>
-
-                <p className={`text-[10px] ${theme.text600}`}>Agents used</p>
-
-                <p className={`text-lg font-semibold ${theme.text} mt-1`}>3</p>
-
-              </div>
-
-
-
-              <div className={`rounded-xl border ${theme.borderSubtle} ${theme.surface2} p-3`}>
-
-                <p className={`text-[10px] ${theme.text600}`}>Time</p>
-
-                <p className={`text-lg font-semibold ${theme.text} mt-1`}>2.4s</p>
-
-              </div>
-
-            </div>
-
-          </div>
-
+      <button aria-label="Close code workspace" onClick={() => setOpen(false)} className={`fixed inset-0 z-30 ${theme.dark ? 'bg-black/20' : 'bg-black/10'}`} />
+      <aside className={`fixed right-0 top-0 bottom-0 z-40 w-full sm:w-[70vw] lg:w-1/2 max-w-none ${theme.panelBg} backdrop-blur-2xl border-l ${theme.border} rounded-l-2xl shadow-[-24px_0_80px_-35px_rgba(244,63,94,0.32)] overflow-hidden flex flex-col`}>
+        <div className={`px-4 sm:px-5 py-4 flex items-center justify-between border-b ${theme.borderSubtle} shrink-0`}>
+          <div className="flex items-center gap-3 min-w-0"><div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500/20 via-red-500/10 to-violet-500/20 border border-rose-400/20 flex items-center justify-center text-rose-400 shadow-lg shadow-rose-950/20"><Code2 size={19}/></div><div className="min-w-0"><h3 className={`text-sm font-semibold tracking-tight ${theme.text}`}>Code Studio</h3><p className={`text-[11px] ${theme.text600}`}>Edit, inspect and preview generated code</p></div></div>
+          <button onClick={() => setOpen(false)} className={`w-9 h-9 rounded-xl border ${theme.border} ${theme.surfaceHover} flex items-center justify-center ${theme.text400}`} aria-label="Close"><X size={17}/></button>
         </div>
-
+        <div className={`px-4 py-3 border-b ${theme.borderSubtle} flex flex-wrap items-center justify-between gap-3`}>
+          <div className={`flex gap-1 p-1 rounded-xl border ${theme.border} ${theme.surface2}`}><button onClick={() => setActiveTab('code')} className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition ${activeTab === 'code' ? 'bg-gradient-to-r from-rose-500/15 to-violet-500/15 text-rose-400 shadow-sm' : theme.text500}`}><Code2 size={14}/> Editor</button><button onClick={() => setActiveTab('preview')} className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition ${activeTab === 'preview' ? 'bg-gradient-to-r from-rose-500/15 to-violet-500/15 text-rose-400 shadow-sm' : theme.text500}`}><Eye size={14}/> Preview</button></div>
+          <div className="flex items-center gap-2"><button onClick={copyCode} disabled={!code} className={`px-3 py-2 rounded-xl border ${theme.border} ${theme.surfaceHover} ${theme.text400} text-xs font-medium flex items-center gap-2 disabled:opacity-40`}><Copy size={13}/>{copied ? 'Copied' : 'Copy'}</button><button onClick={downloadCode} disabled={!code} className={`px-3 py-2 rounded-xl border ${theme.border} ${theme.surfaceHover} ${theme.text400} text-xs font-medium flex items-center gap-2 disabled:opacity-40`}><Download size={13}/> Export</button><button onClick={() => setRunVersion((value) => value + 1)} className="px-3 py-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-violet-600 hover:brightness-110 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-rose-950/25"><Play size={13}/> Refresh preview</button></div>
+        </div>
+        {codeBlocks.length > 0 && <div className={`px-4 py-2.5 border-b ${theme.borderSubtle} flex gap-2 overflow-x-auto`}>{codeBlocks.map((block, index) => <button key={block.id} onClick={() => { setSelectedBlock(index); setManualCode(''); }} className={`shrink-0 px-3 py-2 rounded-xl text-[11px] border transition ${selectedBlock === index ? 'border-rose-500/35 bg-rose-500/10 text-rose-400' : `${theme.border} ${theme.text500} ${theme.surfaceHover}`}`}>{block.language} <span className="opacity-50">/ {String(index + 1).padStart(2, '0')}</span></button>)}</div>}
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4">
+          {activeTab === 'code' ? (codeBlocks.length ? <div className={`h-full rounded-2xl border ${theme.border} overflow-hidden flex flex-col bg-[#09090b] shadow-inner`}><div className="h-11 px-4 border-b border-white/[0.07] flex items-center justify-between text-[11px] text-zinc-500"><div className="flex items-center gap-2"><span className="flex gap-1"><i className="w-2 h-2 rounded-full bg-rose-400"/><i className="w-2 h-2 rounded-full bg-amber-400"/><i className="w-2 h-2 rounded-full bg-emerald-400"/></span><span className="ml-2">{selected?.language || 'source'}</span></div><span>{code.split('\n').length} lines · {code.length} chars</span></div><textarea spellCheck={false} value={code} onChange={(event) => setManualCode(event.target.value)} className="flex-1 min-h-0 w-full resize-none bg-transparent p-5 font-mono text-[13px] sm:text-sm leading-7 text-zinc-200 outline-none selection:bg-rose-500/30" aria-label="Generated code editor" /></div> : <div className={`h-full rounded-2xl border ${theme.border} ${theme.surface2} flex flex-col items-center justify-center text-center p-8`}><div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500/15 to-violet-500/15 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4"><Code2 size={25}/></div><p className={`text-sm font-semibold ${theme.text}`}>Your workspace is ready</p><p className={`text-xs ${theme.text500} mt-2 max-w-xs leading-5`}>Ask Nexus to generate code in a fenced code block and it will appear here. Multiple blocks and languages are supported.</p></div>) : <div className={`h-full rounded-2xl overflow-hidden border ${theme.border} ${theme.dark ? 'bg-[#09090b]' : 'bg-white'} shadow-inner`}><iframe key={runVersion} title="Generated code preview" sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={previewDocument} className="w-full h-full" /></div>}
+        </div>
+        <div className={`px-4 py-3 border-t ${theme.borderSubtle} flex flex-wrap items-center justify-between gap-2 text-[10px] ${theme.text600}`}><span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400"/> Language detected: <strong className={theme.text400}>{language.toUpperCase()}</strong></span><span>Live preview supports HTML, SVG, CSS, JS, React/JSX, Markdown, JSON and Mermaid. Native languages are shown as source unless a runtime is configured.</span></div>
       </aside>
+<style>{`
+  * { scrollbar-color: #000000 #080808; scrollbar-width: thin; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-track { background: #080808; }
+  *::-webkit-scrollbar-thumb { background: #000000; border-radius: 9999px; border: 1px solid #080808; }
+  *::-webkit-scrollbar-thumb:hover { background: #171717; }
+`}</style>
 
     </>
-
   );
-
 }
-
-
 
 /* ─────────────────────────────────────────────────────────────
 
@@ -2062,7 +1797,7 @@ function EmptyState({ onSend, theme }) {
 
   return (
 
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto">
 
       {/* Nexus mark */}
 
@@ -2518,9 +2253,9 @@ function ChatInput({ onSend, theme }) {
 
   return (
 
-    <div className="px-3 sm:px-5 lg:px-8 pb-3 sm:pb-4 pt-2 shrink-0">
+    <div className="px-3 sm:px-4 md:px-6 pb-4 sm:pb-5 pt-2">
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto">
 
         <div
 
@@ -2544,6 +2279,7 @@ function ChatInput({ onSend, theme }) {
 
         >
 
+
           <textarea
 
             ref={textareaRef}
@@ -2566,7 +2302,7 @@ function ChatInput({ onSend, theme }) {
 
               ${theme.placeholder}
 
-              px-4 sm:px-5 pt-4 sm:pt-5 pb-14
+              px-4 sm:px-5 pt-3 sm:pt-4 pb-14
 
               max-h-[180px]
 
@@ -2766,71 +2502,558 @@ function ChatInput({ onSend, theme }) {
 
 
 
-function ChatMessages({ messages, isTyping, theme }) {
-  return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
-      <div className="space-y-7 sm:space-y-9">
-        {messages.map((message) => {
-          const isUser = message.role === 'user';
-          if (isUser) {
-            return (
-              <div key={message._id || message.id} className="flex justify-end">
-                <div className="max-w-[90%] sm:max-w-[80%] min-w-0">
-                  <div className={`rounded-3xl px-4 py-3 text-sm leading-7 break-words whitespace-pre-wrap ${theme.dark ? 'bg-[#292929] text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
-                    {message.content}
-                  </div>
-                </div>
-              </div>
-            );
-          }
-          return (
-            <article key={message._id || message.id} className="flex gap-3 sm:gap-4 min-w-0">
-              <div className="shrink-0 w-8 h-8 mt-0.5 rounded-xl border border-red-500/20 bg-gradient-to-br from-red-600/20 to-pink-600/20 flex items-center justify-center">
-                <NexusLogo size={19} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className={`text-sm font-semibold ${theme.text}`}>Nexus AI</span>
-                  <span className={`text-[11px] ${theme.text600}`}>Assistant</span>
-                </div>
-                <div className={`text-[14px] sm:text-[15px] leading-7 break-words whitespace-pre-wrap ${theme.dark ? 'text-zinc-200' : 'text-zinc-700'}`}>
-                  {message.content}
-                </div>
-                {message.agents?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {message.agents.map((agent) => (
-                      <span key={agent} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${theme.border} ${theme.surface} text-[11px] ${theme.text500}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />{agent}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-1 mt-3">
-                  <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(String(message.content || '')); } catch (error) { console.error('Could not copy response:', error); } }} className={`p-2 rounded-lg ${theme.text600} ${theme.surfaceHover} transition`} title="Copy response" aria-label="Copy response"><Copy size={14} /></button>
-                  <button type="button" className={`p-2 rounded-lg ${theme.text600} ${theme.surfaceHover} transition`} title="Good response" aria-label="Good response"><ThumbsUp size={14} /></button>
-                  <button type="button" className={`p-2 rounded-lg ${theme.text600} ${theme.surfaceHover} transition`} title="Bad response" aria-label="Bad response"><ThumbsDown size={14} /></button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-        {isTyping && (
-          <div className="flex gap-3 sm:gap-4">
-            <div className="shrink-0 w-8 h-8 rounded-xl border border-red-500/20 bg-red-500/10 flex items-center justify-center"><NexusLogo size={19} /></div>
-            <div className="pt-1">
-              <p className={`text-sm font-semibold mb-3 ${theme.text}`}>Nexus AI</p>
-              <div className="flex items-center gap-1.5 py-2">
-                <span className="w-2 h-2 rounded-full bg-red-400 animate-bounce" />
-                <span className="w-2 h-2 rounded-full bg-pink-400 animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 rounded-full bg-rose-400 animate-bounce [animation-delay:300ms]" />
-              </div>
-            </div>
+
+/* Render common Markdown formatting in AI responses without an extra dependency. */
+function renderInlineMarkdown(text, theme, keyPrefix = 'inline') {
+  const pattern = /(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*[^*\n]+\*|_[^_\n]+_|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g;
+  const parts = String(text).split(pattern);
+
+  return parts.map((part, index) => {
+    const key = `${keyPrefix}-${index}`;
+    if (/^(\*\*.*\*\*|__.*__)$/.test(part)) {
+      return <strong key={key} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (/^(`[^`]+`)$/.test(part)) {
+      return <code key={key} className="px-1.5 py-0.5 rounded-md bg-black/10 dark:bg-white/10 font-mono text-[0.92em]">{part.slice(1, -1)}</code>;
+    }
+    if (/^(\*[^*\n]+\*|_[^_\n]+_)$/.test(part)) {
+      return <em key={key}>{part.slice(1, -1)}</em>;
+    }
+    const link = part.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+    if (link) {
+      return <a key={key} href={link[2]} target="_blank" rel="noreferrer" className="text-red-400 underline underline-offset-2 break-all">{link[1]}</a>;
+    }
+    return part;
+  });
+}
+
+function FormattedMessage({ content, theme }) {
+  const source = String(content || '').replace(/\r\n?/g, '\n').trim();
+  if (!source) return null;
+
+  const lines = source.split('\n');
+  const blocks = [];
+  let paragraph = [];
+  let listItems = [];
+  let listType = null;
+  let codeLines = [];
+  let inCode = false;
+  let codeLanguage = '';
+  let blockIndex = 0;
+  let skipUntilLine = -1;
+
+  const flushParagraph = () => {
+    if (paragraph.length) {
+      blocks.push(
+        <p key={`p-${blockIndex++}`} className="my-3 first:mt-0 last:mb-0 whitespace-pre-wrap">
+          {paragraph.map((line, index) => (
+            <React.Fragment key={index}>
+              {index > 0 && <br />}
+              {renderInlineMarkdown(line, theme, `p-${blockIndex}-${index}`)}
+            </React.Fragment>
+          ))}
+        </p>
+      );
+      paragraph = [];
+    }
+  };
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    const ListTag = listType === 'ol' ? 'ol' : 'ul';
+    blocks.push(
+      <ListTag
+        key={`list-${blockIndex++}`}
+        className={`my-3 space-y-1.5 pl-6 ${listType === 'ol' ? 'list-decimal' : 'list-disc'}`}
+      >
+        {listItems.map((item, index) => (
+          <li key={index} className="pl-1">
+            {renderInlineMarkdown(item, theme, `li-${blockIndex}-${index}`)}
+          </li>
+        ))}
+      </ListTag>
+    );
+    listItems = [];
+    listType = null;
+  };
+
+  const flushCode = () => {
+    const codeText = codeLines.join('\n');
+    blocks.push(
+      <div key={`code-${blockIndex++}`} className="my-4 overflow-hidden rounded-xl border border-white/10 bg-[#111113]">
+        {codeLanguage && (
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2 text-[11px] text-zinc-400">
+            <span className="uppercase tracking-wide">{codeLanguage || 'code'}</span>
+            <button
+              type="button"
+              onClick={async () => {
+                try { await navigator.clipboard.writeText(codeText); } catch (error) { console.error('Could not copy code:', error); }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-zinc-400 transition hover:bg-white/10 hover:text-white"
+              aria-label="Copy code block"
+            >
+              <Copy size={12} /> Copy
+            </button>
           </div>
         )}
+        <pre className="overflow-x-auto p-4 text-[12px] sm:text-[13px] leading-6 text-zinc-100">
+          <code>{codeText}</code>
+        </pre>
       </div>
+    );
+    codeLines = [];
+    codeLanguage = '';
+  };
+
+  lines.forEach((line, lineIndex) => {
+    if (lineIndex <= skipUntilLine) return;
+
+    // Render Markdown tables as real tables instead of exposing pipe characters.
+    const nextLine = lines[lineIndex + 1] || '';
+    const isTableRow = /^\s*\|?.+\|.+\|?\s*$/.test(line);
+    const isTableDivider = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(nextLine);
+    if (isTableRow && isTableDivider) {
+      flushParagraph();
+      flushList();
+      const parseCells = (row) => row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim());
+      const headers = parseCells(line);
+      const rows = [];
+      let end = lineIndex + 2;
+      while (end < lines.length && lines[end].includes('|') && lines[end].trim()) {
+        rows.push(parseCells(lines[end]));
+        end += 1;
+      }
+      skipUntilLine = end - 1;
+      blocks.push(
+        <div key={`table-${blockIndex++}`} className="my-4 w-full overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full min-w-[420px] border-collapse text-left text-sm">
+            <thead className="bg-white/[0.06]"><tr>{headers.map((cell, index) => <th key={index} className="border-b border-white/10 px-4 py-3 font-semibold">{renderInlineMarkdown(cell, theme, `th-${lineIndex}-${index}`)}</th>)}</tr></thead>
+            <tbody>{rows.map((row, rowIndex) => <tr key={rowIndex} className="odd:bg-white/[0.015] hover:bg-white/[0.035]">{headers.map((_, cellIndex) => <td key={cellIndex} className="border-b border-white/[0.06] px-4 py-3 align-top">{renderInlineMarkdown(row[cellIndex] || '', theme, `td-${lineIndex}-${rowIndex}-${cellIndex}`)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      );
+      return;
+    }
+
+    const fence = line.match(/^\s*```([\w#+.-]*)\s*$/);
+    if (fence) {
+      if (!inCode) {
+        flushParagraph();
+        flushList();
+        inCode = true;
+        codeLanguage = fence[1];
+      } else {
+        flushCode();
+        inCode = false;
+      }
+      return;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      return;
+    }
+
+    if (!line.trim()) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    if (/^\s*(---+|\*\*\*+|___+)\s*$/.test(line)) {
+      flushParagraph();
+      flushList();
+      blocks.push(<hr key={`hr-${blockIndex++}`} className="my-5 border-white/15" />);
+      return;
+    }
+
+    const heading = line.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      const level = heading[1].length;
+      const classes = {
+        1: 'text-xl sm:text-2xl font-bold mt-6 mb-3',
+        2: 'text-lg sm:text-xl font-bold mt-5 mb-3',
+        3: 'text-base sm:text-lg font-semibold mt-4 mb-2',
+        4: 'text-base font-semibold mt-4 mb-2',
+        5: 'text-sm font-semibold mt-3 mb-2',
+        6: 'text-sm font-semibold mt-3 mb-2',
+      };
+      const HeadingTag = `h${level}`;
+      blocks.push(
+        <HeadingTag key={`heading-${blockIndex++}`} className={`${classes[level]} ${theme.text200}`}>
+          {renderInlineMarkdown(heading[2], theme, `heading-${blockIndex}`)}
+        </HeadingTag>
+      );
+      return;
+    }
+
+    const unordered = line.match(/^\s*[-*+]\s+(.+)$/);
+    const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+    if (unordered || ordered) {
+      flushParagraph();
+      const nextType = ordered ? 'ol' : 'ul';
+      if (listType && listType !== nextType) flushList();
+      listType = nextType;
+      listItems.push((unordered || ordered)[1]);
+      return;
+    }
+
+    const quote = line.match(/^\s*>\s?(.*)$/);
+    if (quote) {
+      flushParagraph();
+      flushList();
+      blocks.push(
+        <blockquote key={`quote-${blockIndex++}`} className={`my-3 border-l-2 border-red-500/60 pl-4 italic ${theme.text300}`}>
+          {renderInlineMarkdown(quote[1], theme, `quote-${blockIndex}`)}
+        </blockquote>
+      );
+      return;
+    }
+
+    flushList();
+    paragraph.push(line);
+  });
+
+  if (inCode) flushCode();
+  flushParagraph();
+  flushList();
+
+  return <div className="min-w-0 break-words">{blocks}</div>;
+}
+
+function ChatHistoryLoader({ theme }) {
+  return (
+    <div
+      className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-7 sm:py-9"
+      role="status"
+      aria-label="Loading conversation"
+    >
+      <div className="flex items-center gap-3 mb-7">
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-xl border border-red-500/20 bg-gradient-to-br from-red-600/20 to-pink-600/20">
+          <span className="h-4 w-4 rounded-full border-2 border-red-400/30 border-t-red-400 animate-spin" />
+        </span>
+        <div>
+          <p className={`text-sm font-medium ${theme.text200}`}>Loading conversation</p>
+          <p className={`text-xs mt-1 ${theme.text600}`}>Fetching your messages…</p>
+        </div>
+      </div>
+
+      <div className="space-y-7 animate-pulse" aria-hidden="true">
+        <div className="flex justify-end">
+          <div className={`w-[58%] sm:w-[44%] space-y-2 rounded-3xl p-4 ${theme.dark ? 'bg-white/[0.06]' : 'bg-zinc-100'}`}>
+            <div className={`h-3 rounded-full w-full ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+            <div className={`h-3 rounded-full w-2/3 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className={`h-9 w-9 shrink-0 rounded-xl ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          <div className="flex-1 space-y-3 pt-1">
+            <div className={`h-3 rounded-full w-28 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+            <div className={`h-3 rounded-full w-full ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+            <div className={`h-3 rounded-full w-[92%] ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+            <div className={`h-3 rounded-full w-3/5 ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <div className={`w-[46%] rounded-3xl p-4 ${theme.dark ? 'bg-white/[0.06]' : 'bg-zinc-100'}`}>
+            <div className={`h-3 rounded-full w-full ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <div className={`h-9 w-9 shrink-0 rounded-xl ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+          <div className="flex-1 space-y-3 pt-1">
+            <div className={`h-3 rounded-full w-28 ${theme.dark ? 'bg-white/10' : 'bg-zinc-200'}`} />
+            <div className={`h-3 rounded-full w-[96%] ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+            <div className={`h-3 rounded-full w-4/5 ${theme.dark ? 'bg-white/[0.07]' : 'bg-zinc-100'}`} />
+          </div>
+        </div>
+      </div>
+      <span className="sr-only">Please wait while the conversation history loads.</span>
     </div>
   );
 }
+
+function ChatMessages({ messages, isTyping, theme }) {
+
+  return (
+
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-7 sm:py-9">
+
+      <div className="space-y-6 sm:space-y-7">
+
+        {messages.map((message) => {
+
+          if (message.role === 'user') {
+
+            return (
+
+              <div key={message._id || message.id} className="flex justify-end mb-7">
+
+                <div className="max-w-[85%] sm:max-w-[80%] md:max-w-[70%]">
+
+                  <div
+
+                    className="
+
+                      px-4 py-3.5 rounded-3xl
+
+                      ${theme.dark ? 'bg-[#252525] border border-white/[0.04]' : 'bg-zinc-100 border border-zinc-200/70'}
+
+                      text-sm ${theme.dark ? 'text-zinc-100' : 'text-zinc-900'}
+
+                      break-words whitespace-pre-wrap
+
+                    "
+
+                  >
+
+                    {message.content}
+
+                  </div>
+
+
+
+                  <p className={`text-[10px] ${theme.text700} text-right mt-2`}>
+
+                    You
+
+                  </p>
+
+                </div>
+
+              </div>
+
+            );
+
+          }
+
+
+
+          return (
+
+            <div key={message._id || message.id} className="flex gap-3 sm:gap-4 md:gap-5 mb-8">
+
+              <div
+
+                className="
+
+                  shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl
+
+                  bg-gradient-to-br from-red-600/20 to-pink-600/20
+
+                  border border-red-500/20
+
+                  flex items-center justify-center
+
+                  shadow-[0_0_25px_-8px_rgba(244,63,94,0.8)]
+
+                "
+
+              >
+
+                <NexusLogo size={20} />
+
+              </div>
+
+
+
+              <div className="min-w-0 flex-1">
+
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+
+                  <span className={`text-sm font-semibold ${theme.text200}`}>
+
+                    Nexus AI
+
+                  </span>
+
+
+
+                  <span className={`text-[10px] ${theme.text600}`}>
+
+                    · Response
+
+                  </span>
+
+                </div>
+
+
+
+                <div className={`text-[14px] sm:text-[15px] leading-7 ${theme.dark ? "text-zinc-200" : "text-zinc-700"} break-words max-w-none`}>
+
+                  <FormattedMessage content={message.content} theme={theme} />
+
+                </div>
+
+
+
+                {message.agents && (
+
+                  <div className="flex flex-wrap gap-2 mt-4">
+
+                    {message.agents.map((agent) => (
+
+                      <span
+
+                        key={agent}
+
+                        className={`
+
+                          inline-flex items-center gap-1.5
+
+                          px-2.5 py-1 rounded-lg
+
+                          ${theme.surface}
+
+                          border ${theme.border}
+
+                          text-[10px] ${theme.text500}
+
+                        `}
+
+                      >
+
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+
+                        {agent}
+
+                      </span>
+
+                    ))}
+
+                  </div>
+
+                )}
+
+
+
+                <div className="flex items-center gap-1 mt-4">
+
+                  <button
+
+                    className={`p-2 rounded-lg ${theme.text700} hover:${theme.text300} ${theme.surfaceHover} transition`}
+
+                    title="Copy"
+
+                  >
+
+                    <Copy size={14} />
+
+                  </button>
+
+
+
+                  <button
+
+                    className={`p-2 rounded-lg ${theme.text700} hover:${theme.text300} ${theme.surfaceHover} transition`}
+
+                    title="Good response"
+
+                  >
+
+                    <ThumbsUp size={14} />
+
+                  </button>
+
+
+
+                  <button
+
+                    className={`p-2 rounded-lg ${theme.text700} hover:${theme.text300} ${theme.surfaceHover} transition`}
+
+                    title="Bad response"
+
+                  >
+
+                    <ThumbsDown size={14} />
+
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          );
+
+        })}
+
+
+
+        {isTyping && (
+
+          <div className="flex gap-2.5 sm:gap-3 md:gap-4">
+
+            <div
+
+              className="
+
+                shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-xl
+
+                bg-gradient-to-br from-red-600/20 to-pink-600/20
+
+                border border-red-500/20
+
+                flex items-center justify-center
+
+              "
+
+            >
+
+              <NexusLogo size={20} />
+
+            </div>
+
+            <div>
+
+              <div className={`text-sm font-semibold ${theme.text200} mb-3`}>
+
+                Nexus AI
+
+              </div>
+
+
+
+              <div
+
+                className={`
+
+                  flex items-center gap-1.5 px-4 py-3
+
+                  rounded-2xl ${theme.surface}
+
+                  border ${theme.border}
+
+                `}
+
+              >
+
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-bounce" />
+
+                <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce [animation-delay:150ms]" />
+
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-bounce [animation-delay:300ms]" />
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
+
 
 /* ─────────────────────────────────────────────────────────────
 
@@ -2845,6 +3068,8 @@ export default function NexusChatPage() {
   const dispatch = useDispatch();
 
   const darkMode = useSelector((state) => state.toggle.darkMode);
+
+  const user = useSelector((state) => state.auth?.user ?? null);
 
   const theme = getTheme(darkMode);
 
@@ -2864,6 +3089,9 @@ export default function NexusChatPage() {
 
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [conversationsLoading, setConversationsLoading] = useState(true);
+  const [dialog, setDialog] = useState(null);
 
   const conversations = useSelector(
     (state) => state.conversation?.conversations ?? []
@@ -2871,118 +3099,145 @@ export default function NexusChatPage() {
   const reduxActiveConversation = useSelector(
     (state) => state.conversation?.activeConversation ?? null
   );
-  const activeConversation = reduxActiveConversation?._id ?? null;
+  // The slice may store either the conversation object or its MongoDB ID.
+  const activeConversation =
+    typeof reduxActiveConversation === 'string'
+      ? reduxActiveConversation
+      : reduxActiveConversation?._id ?? null;
   const messages = useSelector((state) => state.message?.messages ?? []);
 
 
 
   const navigate = useNavigate();
 
-  const chatEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
+  const scrollToBottom = (behavior = 'smooth') => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
 
-  const generateDemoResponse = (userMessage) => {
-
-    const text = userMessage.toLowerCase();
-
-
-
-    if (
-
-      text.includes('mern') ||
-
-      text.includes('react') ||
-
-      text.includes('node') ||
-
-      text.includes('javascript')
-
-    ) {
-
-      return {
-
-        content:
-
-          'Absolutely. For a MERN application, I would structure the system into four main layers:\n\n1. React — handles the UI and client-side state.\n2. Node.js + Express — exposes your REST APIs and business logic.\n3. MongoDB — stores application data with Mongoose models.\n4. Authentication — use JWT or an OAuth provider such as Google.\n\nFor a production project, I would also separate controllers, services, routes, middleware, and models so the backend remains maintainable as the application grows.',
-
-        agents: ['Orchestrator', 'Coding Agent', 'Reasoning Agent'],
-
-      };
-
-    }
-
-
-
-    if (text.includes('ai') || text.includes('agent') || text.includes('llm')) {
-
-      return {
-
-        content:
-
-          'Nexus can approach this as a multi-agent problem. The Orchestrator first understands your request and then delegates the work to specialized agents.\n\nFor example, a Research Agent can gather information, a Reasoning Agent can analyze it, and a Coding Agent can turn the result into an implementation. Their outputs are then synthesized into a single response.\n\nThis architecture is especially useful when a task requires multiple types of expertise rather than a single model call.',
-
-        agents: ['Orchestrator', 'Research Agent', 'Reasoning Agent'],
-
-      };
-
-    }
-
-
-
-    if (
-
-      text.includes('mongodb') ||
-
-      text.includes('database') ||
-
-      text.includes('query')
-
-    ) {
-
-      return {
-
-        content:
-
-          'For MongoDB, I recommend starting by identifying the queries your application performs most frequently. Then design indexes around those access patterns.\n\nFor example, if you frequently search teachers by location, a 2dsphere index on a GeoJSON Point is appropriate. If you frequently filter by subject and class, compound indexes can help.\n\nThe key principle is to optimize for your real query patterns rather than adding indexes everywhere.',
-
-        agents: ['Research Agent', 'Coding Agent', 'Reasoning Agent'],
-
-      };
-
-    }
-
-
-
-    if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
-
-      return {
-
-        content:
-
-          "Hello! 👋 I'm Nexus AI.\n\nI'm your multi-agent AI workspace. You can ask me to research a topic, solve a complex problem, write or debug code, analyze documents, or combine several of these capabilities into one task.\n\nWhat would you like to work on?",
-
-        agents: ['Nexus Orchestrator'],
-
-      };
-
-    }
-
-
-
-    return {
-
-      content:
-
-        "I've analyzed your request and I'm ready to help.\n\nFor a production version of Nexus, this message would be generated by the selected AI agents. The Orchestrator would determine which specialists are needed, run them in parallel when possible, and synthesize their results into one answer.\n\nFor now, this is a demo response showing how the conversation flow will work once your backend/API is connected.",
-
-      agents: ['Orchestrator', 'Reasoning Agent'],
-
-    };
-
+    setShowScrollToBottom(false);
   };
 
+  const handleMessagesScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+
+    setShowScrollToBottom(distanceFromBottom > 150);
+  };
+
+  // Validate the locally stored session whenever the chat page opens.
+  // Supports either a direct user object or { user, expiry/expiresAt }.
+  useEffect(() => {
+    const checkLocalSession = () => {
+      let storedValue;
+
+      try {
+        storedValue = localStorage.getItem('user');
+        if (!storedValue) {
+          setDialog({ type: 'session', title: 'Your session has ended', message: 'For your security, please sign in again to continue using Nexus AI.' });
+          return;
+        }
+
+        const parsed = JSON.parse(storedValue);
+        const storedUser = parsed?.user ?? parsed;
+        const expiryValue =
+          parsed?.expiry ??
+          parsed?.expiresAt ??
+          parsed?.expires ??
+          storedUser?.expiry ??
+          storedUser?.expiresAt ??
+          storedUser?.expires ??
+          localStorage.getItem('userExpiry') ??
+          localStorage.getItem('sessionExpiry') ??
+          localStorage.getItem('expiresAt');
+
+        // If the login flow stores an explicit expiry, enforce it.
+        // If it doesn't, initialize a 24-hour timer from the existing
+        // login timestamp when available.
+        const loginTime =
+          parsed?.loginAt ??
+          parsed?.loginTime ??
+          storedUser?.loginAt ??
+          storedUser?.loginTime ??
+          localStorage.getItem('loginAt') ??
+          localStorage.getItem('loginTime');
+
+        let expiresAt = expiryValue ? new Date(expiryValue).getTime() : NaN;
+
+        if (!Number.isFinite(expiresAt) && loginTime) {
+          const loginTimestamp = new Date(loginTime).getTime();
+          if (Number.isFinite(loginTimestamp)) {
+            expiresAt = loginTimestamp + 24 * 60 * 60 * 1000;
+          }
+        }
+
+        if (!storedUser || typeof storedUser !== 'object' ||
+            !(storedUser.googleId || storedUser.userId || storedUser._id || storedUser.email)) {
+          localStorage.removeItem('user');
+          setDialog({ type: 'session', title: 'Your session has ended', message: 'For your security, please sign in again to continue using Nexus AI.' });
+          return;
+        }
+
+        if (Number.isFinite(expiresAt) && Date.now() >= expiresAt) {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userExpiry');
+          localStorage.removeItem('sessionExpiry');
+          localStorage.removeItem('expiresAt');
+          localStorage.removeItem('loginAt');
+          localStorage.removeItem('loginTime');
+
+          setDialog({ type: 'session', title: 'Session expired', message: 'Your 24-hour session has expired. Sign in again to pick up where you left off.' });
+        }
+      } catch (error) {
+        localStorage.removeItem('user');
+        setDialog({ type: 'session', title: 'Session unavailable', message: 'Your saved sign-in details could not be verified. Please sign in again.' });
+      }
+    };
+
+    checkLocalSession();
+  }, [navigate]);
+
+
+
+  const handleDeleteConversation = async (conversationId) => {
+    const conversation = conversations.find((item) => item._id === conversationId);
+    setDialog({
+      type: 'delete',
+      conversationId,
+      title: conversation?.title || 'Untitled conversation',
+      message: 'This conversation and its messages will be permanently deleted. This action cannot be undone.',
+    });
+  };
+
+  const confirmDeleteConversation = async () => {
+    const conversationId = dialog?.conversationId;
+    if (!conversationId) return;
+
+    try {
+      await chatService.deleteConversation(dispatch, conversationId);
+      setDialog(null);
+      if (activeConversation === conversationId) {
+        dispatch(clearActiveConversation());
+        dispatch(clearMessages());
+        setHasStartedChat(false);
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+      setDialog({ type: 'error', title: 'Could not delete conversation', message: error.response?.data?.message || 'Something went wrong. Please try again.' });
+    }
+  };
 
   const handleConversationSelection = async (conversationId) => {
     setSidebarOpen(false);
@@ -2992,70 +3247,111 @@ export default function NexusChatPage() {
       dispatch(clearMessages());
       setHasStartedChat(false);
       setIsTyping(false);
+      setIsLoadingHistory(false);
       return;
     }
 
     dispatch(setReduxActiveConversation(conversationId));
+    dispatch(clearMessages());
     setHasStartedChat(true);
     setIsTyping(false);
+    setIsLoadingHistory(true);
 
     try {
       await chatService.getMessages(dispatch, conversationId);
     } catch (error) {
       console.error('Failed to load conversation messages:', error);
+    } finally {
+      setIsLoadingHistory(false);
     }
   };
 
   useEffect(() => {
-    chatService.getConversations(dispatch).catch((error) => {
-      console.error('Failed to load conversations:', error);
-    });
+    setConversationsLoading(true);
+    chatService.getConversations(dispatch)
+      .catch((error) => {
+        console.error('Failed to load conversations:', error);
+      })
+      .finally(() => setConversationsLoading(false));
   }, [dispatch]);
 
   const handleSendMessage = async (message, options = {}) => {
     const content = message?.trim();
     if (!content || isTyping) return;
 
+    // Open Code Studio automatically for programming-related prompts.
+    // Keep this heuristic broad enough to catch code generation, debugging,
+    // framework questions, algorithms, and common developer tooling.
+    const codingPromptPattern = /\b(code|coding|program(?:ming)?|developer|debug(?:ging)?|bug|error|exception|stack trace|syntax|compiler|compile|function|class|method|variable|algorithm|data structure|leetcode|dsa|react|jsx|tsx|javascript|typescript|node(?:\.js)?|express|mern|mongodb|mongoose|html|css|tailwind|frontend|front-end|backend|back-end|api|endpoint|rest api|graphql|sql|database|python|java|c\+\+|\bc\b|rust|golang|php|ruby|bash|shell script|terminal|command line|npm|npx|vite|git|github|docker|redis|redux|component|hook|state management|json|yaml|xml|regex|recursion|loop|array|string|linked list|tree traversal|binary search|dynamic programming|sql query|unit test|testing|refactor|repository|pull request|code review|code studio)\b/i;
+    if (codingPromptPattern.test(content)) {
+      setRightPanel(true);
+    }
+
     setHasStartedChat(true);
     setIsTyping(true);
 
-    try {
-      let conversationId = activeConversation;
+    let conversationId = activeConversation;
 
+    try {
+      // Create a conversation with the first message as its title.
       if (!conversationId) {
-        const conversation = await chatService.createConversation(dispatch);
+        // Use the first user message as the conversation title.
+        // Keep the stored title short enough for the sidebar.
+        const conversationTitle = content.slice(0, 100).trim();
+        const conversation = await chatService.createConversation(
+          dispatch,
+          conversationTitle
+        );
         conversationId = conversation._id;
+
+        // Keep subsequent messages in this conversation instead of creating
+        // a new conversation for every message.
+        dispatch(setReduxActiveConversation(conversationId));
       }
 
-      await chatService.addMessage(dispatch, {
+      // The Agent API runs LangGraph and saves both the user and assistant
+      // messages through the Chat Service. The frontend only updates Redux.
+      await chatService.askAgent(dispatch, {
         conversationId,
-        role: 'user',
-        content,
-      });
-
-      // Keep the current demo response until the agent-generation API is connected.
-      const response = generateDemoResponse(content);
-      await chatService.addMessage(dispatch, {
-        conversationId,
-        role: 'assistant',
-        content: response.content,
+        message: content,
+        options,
       });
     } catch (error) {
-      console.error('Failed to send chat message:', error);
+      console.error('Failed to process agent message:', error);
+
+      // Reload persisted messages if the agent saved a message before failing.
+      if (conversationId) {
+        try {
+          await chatService.getMessages(dispatch, conversationId);
+        } catch (reloadError) {
+          console.error('Failed to reload conversation messages:', reloadError);
+        }
+      }
     } finally {
       setIsTyping(false);
     }
   };
 
+  // Start each selected conversation at the top, like ChatGPT.
+  // New messages do not force the reader to the bottom.
   useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-    chatEndRef.current?.scrollIntoView({
+    container.scrollTop = 0;
+    setShowScrollToBottom(false);
+  }, [activeConversation]);
 
-      behavior: 'smooth',
+  // Show the down-arrow when the current conversation has more content below.
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-    });
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
 
-  }, [messages, isTyping]);
+    setShowScrollToBottom(distanceFromBottom > 150);
+  }, [messages, isTyping, isLoadingHistory, hasStartedChat]);
 
 
 
@@ -3074,6 +3370,28 @@ export default function NexusChatPage() {
       `}
 
     >
+
+      {dialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="nexus-dialog-title">
+          <button type="button" aria-label="Close dialog" onClick={() => dialog.type === 'session' ? (localStorage.removeItem('user'), localStorage.removeItem('token'), localStorage.removeItem('accessToken'), navigate('/login', { replace: true })) : setDialog(null)} className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+          <div className={`relative w-full max-w-md overflow-hidden rounded-3xl border ${theme.dark ? 'border-white/10 bg-[#0b0b0e]' : 'border-zinc-200 bg-white'} shadow-[0_30px_100px_-25px_rgba(0,0,0,0.8)]`}>
+            <div className="h-1 w-full bg-gradient-to-r from-red-600 via-pink-500 to-rose-400" />
+            <div className="p-6 sm:p-7">
+              <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border ${dialog.type === 'delete' ? 'border-red-500/25 bg-red-500/10 text-red-400' : 'border-pink-500/25 bg-gradient-to-br from-red-500/15 to-pink-500/15 text-pink-400'}`}>
+                {dialog.type === 'delete' ? <Trash2 size={24} /> : dialog.type === 'error' ? <X size={24} /> : <ShieldCheck size={24} />}
+              </div>
+              <p className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] ${dialog.type === 'delete' ? 'text-red-400' : 'text-pink-400'}`}>Nexus AI · {dialog.type === 'delete' ? 'Confirmation' : dialog.type === 'session' ? 'Security notice' : 'Something went wrong'}</p>
+              <h2 id="nexus-dialog-title" className={`text-xl sm:text-2xl font-semibold tracking-tight ${theme.text}`}>{dialog.type === 'delete' ? 'Delete this conversation?' : dialog.title}</h2>
+              {dialog.type === 'delete' && <p className={`mt-3 rounded-xl border px-3 py-2 text-sm ${theme.dark ? 'border-white/10 bg-white/[0.03] text-zinc-200' : 'border-zinc-200 bg-zinc-50 text-zinc-800'} break-words`}>{dialog.title}</p>}
+              <p className={`mt-3 text-sm leading-6 ${theme.text400}`}>{dialog.message}</p>
+              <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                {dialog.type !== 'session' && <button type="button" onClick={() => setDialog(null)} className={`rounded-xl border px-4 py-2.5 text-sm font-medium transition ${theme.dark ? 'border-white/10 text-zinc-300 hover:bg-white/[0.05]' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}>Cancel</button>}
+                <button type="button" onClick={() => { if (dialog.type === 'delete') confirmDeleteConversation(); else if (dialog.type === 'session') { localStorage.removeItem('user'); localStorage.removeItem('token'); localStorage.removeItem('accessToken'); localStorage.removeItem('userExpiry'); localStorage.removeItem('sessionExpiry'); localStorage.removeItem('expiresAt'); localStorage.removeItem('loginAt'); localStorage.removeItem('loginTime'); navigate('/login', { replace: true }); } else setDialog(null); }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110 ${dialog.type === 'delete' ? 'bg-gradient-to-r from-red-600 to-rose-600 shadow-red-950/30' : 'bg-gradient-to-r from-red-600 to-pink-600 shadow-red-950/30'}`}>{dialog.type === 'delete' ? 'Delete permanently' : dialog.type === 'session' ? 'Go to login' : 'Got it'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Background glow */}
 
@@ -3153,11 +3471,16 @@ export default function NexusChatPage() {
 
           conversations={conversations}
 
+          conversationsLoading={conversationsLoading}
+
           setActiveConversation={handleConversationSelection}
+
+          onDeleteConversation={handleDeleteConversation}
 
           setSidebarOpen={setSidebarOpen}
 
           theme={theme}
+          user={user}
 
           setHasStartedChat={(value) => {
 
@@ -3236,24 +3559,19 @@ export default function NexusChatPage() {
         <div className="relative flex-1 min-h-0">
 
           <div
-
+            ref={messagesContainerRef}
+            onScroll={handleMessagesScroll}
             className="
-
-              h-full overflow-y-auto
-
+              h-full overflow-y-auto overscroll-contain
               scrollbar-thin
-
-              scrollbar-thumb-white/10
-
-              scrollbar-track-transparent
-
+              scrollbar-thumb-black
+              scrollbar-track-black
             "
-
           >
 
             {!hasStartedChat ? (
 
-              <div className="min-h-full flex items-center justify-center px-4 sm:px-6 py-5 sm:py-7">
+              <div className="h-full flex items-center justify-center px-4 sm:px-5 py-6 sm:py-8 md:py-10">
 
                 <EmptyState onSend={handleSendMessage} theme={theme} />
 
@@ -3263,11 +3581,11 @@ export default function NexusChatPage() {
 
               <>
 
-                <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
-
-
-
-                <div ref={chatEndRef} />
+                {isLoadingHistory ? (
+                  <ChatHistoryLoader theme={theme} />
+                ) : (
+                  <ChatMessages messages={messages} isTyping={isTyping} theme={theme} />
+                )}
 
               </>
 
@@ -3275,9 +3593,30 @@ export default function NexusChatPage() {
 
           </div>
 
+          {showScrollToBottom && (
+            <button
+              type="button"
+              onClick={() => scrollToBottom('smooth')}
+              aria-label="Scroll to latest message"
+              title="Scroll to bottom"
+              className={`
+                absolute bottom-5 left-1/2 -translate-x-1/2
+                z-20 w-10 h-10 rounded-full
+                flex items-center justify-center
+                border shadow-lg backdrop-blur-xl
+                transition-all duration-200 hover:scale-105
+                ${
+                  theme.dark
+                    ? 'bg-[#252525] border-white/15 text-white hover:bg-[#333]'
+                    : 'bg-white border-zinc-200 text-zinc-800 hover:bg-zinc-100'
+                }
+              `}
+            >
+              <ChevronDown size={20} />
+            </button>
+          )}
 
-
-          <AgentPanel open={rightPanel} setOpen={setRightPanel} theme={theme} />
+          <CodeWorkspacePanel open={rightPanel} setOpen={setRightPanel} theme={theme} messages={messages} />
 
           <AIControlsPanel open={aiControls} setOpen={setAiControls} theme={theme} />
 
@@ -3296,9 +3635,3 @@ export default function NexusChatPage() {
 }
 
 
-
-/* ─────────────────────────────────────────────────────────────
-
-   CHAT PAGE
-
-───────────────────────────────────────────────────────────── */
