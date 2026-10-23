@@ -17,6 +17,8 @@ import {
 
   ChevronRight,
 
+  Clock,
+
   Clipboard,
 
   Code2,
@@ -294,9 +296,27 @@ const agents = [
 
 ];
 
-// Keep this lightweight classifier in sync with the prompt types handled by the backend.
-const isCodingPrompt = (value = '') =>
-  /\b(code|coding|program(?:ming)?|developer|debug(?:ging)?|bug|error|exception|stack trace|syntax|compiler|compile|function|class|method|variable|algorithm|data structure|leetcode|dsa|react|jsx|tsx|javascript|typescript|node(?:\.js)?|express|mern|mongodb|mongoose|html|css|tailwind|frontend|front-end|backend|back-end|api|endpoint|rest api|graphql|sql|database|python|java|c\+\+|rust|golang|php|ruby|bash|shell script|terminal|command line|npm|npx|vite|git|github|docker|redis|redux|component|hook|state management|json|yaml|xml|regex|recursion|loop|array|string|linked list|tree traversal|binary search|dynamic programming|unit test|testing|refactor|repository|pull request|code review|code studio)\b/i.test(value);
+// Lightweight prompt routing: show the most relevant specialist while the user types.
+const getRelevantAgent = (value = '') => {
+  const prompt = value.trim();
+  if (!prompt) return 'orchestrator';
+
+  if (/\b(pdf|document|uploaded file|attached file|this file|read this file|summari[sz]e this document|extract from file)\b/i.test(prompt)) return 'pdf';
+  if (/\b(latest|today|current|right now|this week|news|weather|price today|live data|search the web|look up online|find online|recent updates|source links|citations)\b/i.test(prompt)) return 'web';
+  if (/\b(research|compare sources|literature review|market research|investigate|fact check|credible sources|deep dive|research paper|collect evidence)\b/i.test(prompt)) return 'research';
+  if (/\b(prove|proof|reasoning|reason through|step by step|solve this puzzle|logic puzzle|complex problem|analyze the trade.?off|derive|explain|solve|mathematical|math problem|probability|why does|explain why|think through)\b/i.test(prompt)) return 'reasoning';
+  if (/\b(code|coding|program(?:ming)?|developer|debug(?:ging)?|bug|error|exception|stack trace|syntax|compiler|compile|function|class|method|variable|algorithm|data structure|leetcode|dsa|react|jsx|tsx|javascript|typescript|node(?:\.js)?|express|mern|mongodb|mongoose|html|css|tailwind|frontend|front-end|backend|back-end|api|endpoint|rest api|graphql|sql|database|python|java|c\+\+|rust|golang|php|ruby|bash|shell script|terminal|command line|npm|npx|vite|git|github|docker|redis|redux|component|hook|state management|json|yaml|xml|regex|recursion|loop|array|string|linked list|tree traversal|binary search|dynamic programming|unit test|testing|refactor|repository|pull request|code review|code studio)\b/i.test(prompt)) return 'coding';
+  return 'orchestrator';
+};
+
+const getAgentName = (agentId = 'orchestrator') => ({
+  coding: 'Coding Agent',
+  research: 'Research Agent',
+  reasoning: 'Reasoning Agent',
+  web: 'Web Agent',
+  pdf: 'PDF Agent',
+  orchestrator: 'Nexus AI',
+}[agentId] || 'Nexus AI');
 
 
  /* ─────────────────────────────────────────────────────────────
@@ -3096,7 +3116,6 @@ export default function NexusChatPage() {
 
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [isCodingRequest, setIsCodingRequest] = useState(false);
   const [thinkingPhase, setThinkingPhase] = useState(0);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
@@ -3249,6 +3268,15 @@ export default function NexusChatPage() {
   };
 
   const handleConversationSelection = async (conversationId) => {
+    if (isTyping) {
+      setDialog({
+        type: 'notice',
+        title: 'Response is still generating',
+        message: 'You can’t switch to another chat or open chat history while Nexus AI is generating a response. Please wait until the current response is complete.',
+      });
+      return;
+    }
+
     setSidebarOpen(false);
 
     if (!conversationId) {
@@ -3291,14 +3319,10 @@ export default function NexusChatPage() {
     // Open Code Studio automatically for programming-related prompts.
     // Keep this heuristic broad enough to catch code generation, debugging,
     // framework questions, algorithms, and common developer tooling.
-    const codingRequest = isCodingPrompt(content);
-    setIsCodingRequest(codingRequest);
-    if (codingRequest) {
-      setActiveAgent('coding');
-      setRightPanel(true);
-    } else {
-      setActiveAgent('orchestrator');
-    }
+    const selectedAgent = getRelevantAgent(content);
+    const codingRequest = selectedAgent === 'coding';
+    setActiveAgent(selectedAgent);
+    if (codingRequest) setRightPanel(true);
 
     setHasStartedChat(true);
     setIsTyping(true);
@@ -3410,9 +3434,9 @@ export default function NexusChatPage() {
             <div className="h-1 w-full bg-gradient-to-r from-red-600 via-pink-500 to-rose-400" />
             <div className="p-6 sm:p-7">
               <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border ${dialog.type === 'delete' ? 'border-red-500/25 bg-red-500/10 text-red-400' : 'border-pink-500/25 bg-gradient-to-br from-red-500/15 to-pink-500/15 text-pink-400'}`}>
-                {dialog.type === 'delete' ? <Trash2 size={24} /> : dialog.type === 'error' ? <X size={24} /> : <ShieldCheck size={24} />}
+                {dialog.type === 'delete' ? <Trash2 size={24} /> : dialog.type === 'error' ? <X size={24} /> : dialog.type === 'notice' ? <Clock size={24} /> : <ShieldCheck size={24} />}
               </div>
-              <p className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] ${dialog.type === 'delete' ? 'text-red-400' : 'text-pink-400'}`}>Nexus AI · {dialog.type === 'delete' ? 'Confirmation' : dialog.type === 'session' ? 'Security notice' : 'Something went wrong'}</p>
+              <p className={`mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] ${dialog.type === 'delete' ? 'text-red-400' : 'text-pink-400'}`}>Nexus AI · {dialog.type === 'delete' ? 'Confirmation' : dialog.type === 'session' ? 'Security notice' : dialog.type === 'notice' ? 'Please wait' : 'Something went wrong'}</p>
               <h2 id="nexus-dialog-title" className={`text-xl sm:text-2xl font-semibold tracking-tight ${theme.text}`}>{dialog.type === 'delete' ? 'Delete this conversation?' : dialog.title}</h2>
               {dialog.type === 'delete' && <p className={`mt-3 rounded-xl border px-3 py-2 text-sm ${theme.dark ? 'border-white/10 bg-white/[0.03] text-zinc-200' : 'border-zinc-200 bg-zinc-50 text-zinc-800'} break-words`}>{dialog.title}</p>}
               <p className={`mt-3 text-sm leading-6 ${theme.text400}`}>{dialog.message}</p>
@@ -3606,9 +3630,8 @@ export default function NexusChatPage() {
               <div className="h-full flex items-center justify-center px-4 sm:px-5 py-6 sm:py-8 md:py-10">
 
                 <EmptyState onSend={handleSendMessage} onAgentSuggestion={(value) => {
-                  const coding = isCodingPrompt(value);
-                  setIsCodingRequest(coding);
-                  setActiveAgent(coding ? 'coding' : 'orchestrator');
+                  const selectedAgent = getRelevantAgent(value);
+                  setActiveAgent(selectedAgent);
                 }} theme={theme} />
 
               </div>
@@ -3620,7 +3643,7 @@ export default function NexusChatPage() {
                 {isLoadingHistory ? (
                   <ChatHistoryLoader theme={theme} />
                 ) : (
-                  <ChatMessages messages={messages} isTyping={isTyping} thinkingStatus={{ agentName: isCodingRequest ? 'Coding Agent' : 'Nexus AI', label: isCodingRequest ? ['Reading your request...', 'Planning the solution...', 'Generating code...', 'Checking the result...'][thinkingPhase % 4] : ['Thinking through your request...', 'Planning the response...', 'Putting the answer together...'][thinkingPhase % 3] }} theme={theme} />
+                  <ChatMessages messages={messages} isTyping={isTyping} thinkingStatus={{ agentName: getAgentName(activeAgent), label: ({ coding: ['Reading your request...', 'Planning the solution...', 'Generating code...', 'Checking the result...'], research: ['Understanding the research question...', 'Gathering relevant information...', 'Cross-checking key points...', 'Organizing findings...'], reasoning: ['Breaking down the problem...', 'Working through the logic...', 'Checking the reasoning...', 'Preparing the explanation...'], web: ['Understanding what to look up...', 'Searching for relevant information...', 'Reviewing current sources...', 'Preparing a sourced answer...'], pdf: ['Understanding the document task...', 'Reviewing document content...', 'Extracting relevant details...', 'Preparing the summary...'], orchestrator: ['Thinking through your request...', 'Planning the response...', 'Putting the answer together...'] }[activeAgent] || ['Thinking through your request...', 'Planning the response...', 'Putting the answer together...'])[thinkingPhase % (({ coding: 4, research: 4, reasoning: 4, web: 4, pdf: 4, orchestrator: 3 })[activeAgent] || 3)] }} theme={theme} />
                 )}
 
               </>
@@ -3661,9 +3684,8 @@ export default function NexusChatPage() {
 
 
         {hasStartedChat && <ChatInput onSend={handleSendMessage} onAgentSuggestion={(value) => {
-          const coding = isCodingPrompt(value);
-          setIsCodingRequest(coding);
-          setActiveAgent(coding ? 'coding' : 'orchestrator');
+          const selectedAgent = getRelevantAgent(value);
+          setActiveAgent(selectedAgent);
         }} theme={theme} />}
 
       </main>
