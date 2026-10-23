@@ -97,10 +97,10 @@ import chatService from '../services/chatService';
 import {
   clearActiveConversation,
   setActiveConversation as setReduxActiveConversation,
-} from '../redux/slices/conversationSlice';
+} from '../features/Messages/conversation.slice';
 import {
   clearMessages,
-} from '../redux/slices/messageSlice';
+} from '../features/Messages/message.slice';
 
 
 
