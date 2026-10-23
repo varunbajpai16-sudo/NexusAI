@@ -2262,7 +2262,7 @@ function ChatInput({ onSend, onAgentSuggestion, theme }) {
 
     <div className="px-3 sm:px-4 md:px-6 pb-4 sm:pb-5 pt-2">
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
 
         <div
 
@@ -2733,7 +2733,7 @@ function FormattedMessage({ content, theme }) {
 function ChatHistoryLoader({ theme }) {
   return (
     <div
-      className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-7 sm:py-9"
+      className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-7 sm:py-9"
       role="status"
       aria-label="Loading conversation"
     >
@@ -2786,7 +2786,7 @@ function ChatMessages({ messages, isTyping, thinkingStatus, theme }) {
 
   return (
 
-    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-7 sm:py-9">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-7 sm:py-9">
 
       <div className="space-y-6 sm:space-y-7">
 
